@@ -64,7 +64,10 @@ try:
                         dtype = URIRef(dtype)
                     else:
                         dtype = URIRef(dtype)
-                return Literal(term.getLabel(),lang=term.getLanguage(),datatype=dtype)
+                    
+                    return Literal(term.getLabel(), lang=term.getLanguage(),
+                                   datatype=dtype)
+                    
             except Exception, e:
                 print e
         elif type(term) is fBNode:
@@ -91,6 +94,17 @@ try:
         
     def toTuple(statement):
         return (statement.getSubject(),statement.getPredicate(),statement.getObject(),statement.getContext())
-except:
-    pass
+except ImportError, e:
+    print 'franz libraries not installed ',e
+    def toRdfLib(term):
+        pass
+
+    def toSesame(term, factory):
+        pass
+
+    def toStatement((s,p,o),factory,context = None):
+        pass
+
+    def toTuple(statement):
+        pass 
     

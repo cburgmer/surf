@@ -35,36 +35,45 @@
 # -*- coding: utf-8 -*-
 __author__ = 'Cosmin Basca'
 
-#try:
-#    from setuptools import setup, find_packages
-#except ImportError:
-from ez_setup import use_setuptools
-use_setuptools()
-from setuptools import setup, find_packages
+# the rsf way
+#from rdf.graph import Graph, ConjunctiveGraph
+#from rdf.term import URIRef, Literal, BNode, RDF, RDFS
+#from rdf.namespace import Namespace
 
-setup(
-      name='SuRF',
-      version='0.7.4',
-      description='Object RDF Resource Mapper',
-      long_description = 'This is RDF Resource Mapper to python objects, allows one to connect to various triple stores or arbitrary SPARQL endpoints. It is inspired by the work on ActiveRDF for ruby',
-      license = 'New BSD SOFTWARE', 
-      author="Cosmin Basca",
-      author_email="cosmin.basca at google.com",
-      url = 'http://code.google.com/p/surfrdf/',
-      #download_url = 'http://surfrdf.googlecode.com/files/SuRF-0.4-py2.5.egg',
-      platforms = ['any'], #Should be removed by PEP  314
-      packages=find_packages(exclude=['ez_setup']),
-      requires=['simplejson'], # Used by distutils to create metadata PKG-INFO
-      install_requires=['rdflib>=2.4.2',
-                        'simplejson==2.0.9',], #Used by setuptools to install the dependencies
-      classifiers=[
-        'Development Status :: 3 - Alpha',
-        'Intended Audience :: Developers',
-        'License :: OSI Approved :: BSD License',
-        'Operating System :: OS Independent',
-        'Programming Language :: Python :: 2.5',
-      ],
-      keywords = 'python SPARQL RDF resource mapper',
-      requires_python = '>=2.5', # Future in PEP 345
-      scripts = ['ez_setup.py']
-)
+
+# the rdflib 2.4.x way
+from rdflib.Namespace import Namespace
+from rdflib.Graph import Graph, ConjunctiveGraph
+from rdflib.URIRef import URIRef
+from rdflib.BNode import BNode
+from rdflib.Literal import Literal
+from rdflib.RDF import RDFNS as RDF
+from rdflib.RDFS import RDFSNS as RRDFS
+import logging
+
+from surf.query import Query
+
+class QueryTranslator(object):
+    '''The `QueryTranslator` class is responsible with the translation of the query
+    to the appropriate query language in use. One must extend the class and override the
+    :meth:`surf.query.QueryTranslator.translate` method'''
+    def __init__(self, query):
+        self.__query = query
+        if not self.__query.query_type:
+            raise ValueError('No query type specified')
+    
+    def set_query(self,query):
+        if type(query) is Query:
+            self.__query = query
+        else:
+            raise ValueError('query object must be of Query type')
+    query = property(fget = lambda self: self.__query,
+                     fset = set_query)
+    '''the `query`, a :class:`surf.query.Query` instance'''
+    
+    def translate(self):
+        '''translates the `query` to the appropriate query language
+        
+        note: **must** be overriden by subclasses'''
+        return ''
+    

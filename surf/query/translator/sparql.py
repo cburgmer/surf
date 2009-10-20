@@ -42,30 +42,31 @@ __author__ = 'Cosmin Basca'
 #from rdf.term import URIRef, Literal, BNode, RDF, RDFS
 #from rdf.namespace import Namespace
 # the rdflib 2.4.x way
-from rdflib.Namespace import Namespace
-from rdflib.Graph import Graph, ConjunctiveGraph
 from rdflib.URIRef import URIRef
 from rdflib.BNode import BNode
 from rdflib.Literal import Literal
-from rdflib.RDF import RDFNS as RDF
-from rdflib.RDFS import RDFSNS as RRDFS
 
 
-from surf.query import Query, QueryTranslator, SELECT, ASK, DESCRIBE, CONSTRUCT, Group, NamedGroup, OptionalGroup, Filter
+from surf.query.translator import QueryTranslator 
+from surf.query import Query, SELECT, ASK, DESCRIBE, CONSTRUCT, Group, NamedGroup, OptionalGroup, Filter
 from surf.util import is_uri
 
 class SparqlTranslator(QueryTranslator):
     '''translates a query to SPARQL'''
     
     def translate(self):
-        if self.query.query_type == SELECT:
-            return self._translate_select(self.query)
+        if self.query.query_type in [SELECT, DESCRIBE]:
+            return self._translate(self.query)
         elif self.query.query_type == ASK:
             return self._translate_ask(self.query)
             
-    def _translate_select(self,query):
-
-        rep = 'SELECT %(modifier)s %(vars)s %(from_)s WHERE { %(where)s } %(limit)s %(offset)s %(order_by)s'
+    def _translate(self, query):
+        
+        query_type = "SELECT"
+        if query.query_type == DESCRIBE:
+            query_type = "DESCRIBE"
+            
+        rep = '%(query_type)s %(modifier)s %(vars)s %(from_)s WHERE { %(where)s } %(order_by)s %(limit)s %(offset)s '
         modifier    = query.query_modifier.upper() if query.query_modifier else ''
         limit       = ' LIMIT %d '%(query.query_limit) if query.query_limit else ''
         offset      = ' OFFSET %d '%(query.query_offset) if query.query_offset else ''
@@ -77,7 +78,8 @@ class SparqlTranslator(QueryTranslator):
         else:
             order_by= ''
         
-        return rep%({'modifier'     : modifier,
+        return rep%({'query_type'   : query_type,
+                     'modifier'     : modifier,
                      'vars'         : vars,
                      'from_'        : from_,
                      'where'        : where,

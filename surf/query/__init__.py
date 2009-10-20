@@ -35,13 +35,9 @@
 # -*- coding: utf-8 -*-
 __author__ = 'Cosmin Basca'
 
-# the rsf way
-#from rdf.graph import Graph, ConjunctiveGraph
-#from rdf.term import URIRef, Literal, BNode, RDF, RDFS
-#from rdf.namespace import Namespace
+import logging
+import re
 
-
-# the rdflib 2.4.x way
 from rdflib.Namespace import Namespace
 from rdflib.Graph import Graph, ConjunctiveGraph
 from rdflib.URIRef import URIRef
@@ -49,7 +45,6 @@ from rdflib.BNode import BNode
 from rdflib.Literal import Literal
 from rdflib.RDF import RDFNS as RDF
 from rdflib.RDFS import RDFSNS as RRDFS
-import logging
 
 a = RDF['type']
 
@@ -71,7 +66,7 @@ class NamedGroup(Group):
     
     def __init__(self,name = None):
         Group.__init__(self)
-        if type(name) is [URIRef] or (type(name) in [str, unicode] and name.startswith('?')):
+        if isinstance(name, URIRef) or (type(name) in [str, unicode] and name.startswith('?')):
             self.name = name
         else:
             raise ValueError('The names')
@@ -116,7 +111,7 @@ class Query(object):
     TYPES               = [SELECT, ASK, CONSTRUCT, DESCRIBE]
     
     def __init__(self, type, *vars):
-        if type not in Query.TYPES: 
+        if type not in self.TYPES: 
             raise ValueError('''The query is not of a supported type [%s], supported
                              types are %s'''%(type, str(Query.TYPES)))
         self._type      = type
@@ -274,8 +269,12 @@ class Query(object):
     
     def order_by(self, *vars):
         """ Add *ORDER_BY* modifier to query. """
+        
+        pattern = re.compile("(asc|desc)\(\?\w+\)|\?\w+", re.I)
+        for var in vars:
+            if re.match(pattern, var):
+                self._order_by.append(var)
 
-        self._order_by.extend([var for var in vars if type(var) in [str, unicode] and var.startswith('?')])
         return self
     
 def validate_statement(statement):
@@ -372,27 +371,3 @@ def describe(*vars):
     """ Construct and return :class:`Query` object of type **DESCRIBE** """ 
 
     return Query(DESCRIBE, *vars)
-    
-class QueryTranslator(object):
-    '''The `QueryTranslator` class is responsible with the translation of the query
-    to the appropriate query language in use. One must extend the class and override the
-    :meth:`surf.query.QueryTranslator.translate` method'''
-    def __init__(self, query):
-        self.__query = query
-        if not self.__query.query_type:
-            raise ValueError('No query type specified')
-    
-    def set_query(self,query):
-        if type(query) is Query:
-            self.__query = query
-        else:
-            raise ValueError('query object must be of Query type')
-    query = property(fget = lambda self: self.__query,
-                     fset = set_query)
-    '''the `query`, a :class:`surf.query.Query` instance'''
-    
-    def translate(self):
-        '''translates the `query` to the appropriate query language
-        
-        note: **must** be overriden by subclasses'''
-        return ''

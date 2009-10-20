@@ -46,7 +46,7 @@ from setuptools import setup
 
 setup(
     name='surf.sparql_protocol',
-    version='0.2',
+    version='0.3.1',
     description='surf SPARQL protocol plugin',
     long_description = 'provides access to SPARQL protocol endpoints',
     license = 'New BSD SOFTWARE', 
@@ -66,10 +66,10 @@ setup(
     keywords = 'python SPARQL RDF resource mapper',
     requires_python = '>=2.5', # Future in PEP 345
     packages=['sparql_protocol'],
-    install_requires=['surf>=0.5.0',
-                      'sparqlwrapper==1.3.0',],
+    install_requires=['surf>=0.6.0',
+                      'sparqlwrapper==1.3.1',],
     entry_points={
     'surf.plugins.reader': 'sparql_protocol = sparql_protocol.reader:ReaderPlugin',
-    #'surf.plugins.writer': 'sparql_protocol = sparql_protocol.writer:WriterPlugin',
+    'surf.plugins.writer': 'sparql_protocol = sparql_protocol.writer:WriterPlugin',
     }
 )

@@ -37,7 +37,7 @@ __author__ = 'Cosmin Basca'
 
 from surf.plugin.query_reader import RDFQueryReader
 from util import toRdfLib, toSesame, toStatement, toTuple
-from surf.query_to_sparql import SparqlTranslator
+from surf.query.translator.sparql import SparqlTranslator
 from rdflib.URIRef import URIRef
 
 try:
@@ -154,7 +154,7 @@ try:
                 r_dict['results']['bindings'].append(json_binding)
             return r_dict
             
-except:
-    print 'surf.plugin allegro_franz reader : franz libraries not installed'
+except ImportError, e:
+    print 'surf.plugin allegro_franz reader : franz libraries not installed', e
     class ReaderPlugin(RDFQueryReader):
         pass
