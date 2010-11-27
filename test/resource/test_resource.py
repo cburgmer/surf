@@ -123,7 +123,7 @@ class TestResource(TestCase):
         surf.ns.register_fallback("http://example.com/ns#")
         p = Person()
         print p.subject
-        self.assertTrue(str(p.subject).startswith("http://example.com/ns#"))
+        self.assertTrue(unicode(p.subject).startswith("http://example.com/ns#"))
 
     def test_multiple_sessions(self):
         """ Test that multiple sessions coexist correctly. """

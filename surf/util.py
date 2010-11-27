@@ -171,7 +171,7 @@ def uri_to_class(uri):
         surf.util.Ns1some_class
 
     '''
-    return new.classobj(str(uri_to_classname(uri)), (), {'uri':uri})
+    return new.classobj(unicode(uri_to_classname(uri)), (), {'uri':uri})
 
 def uuid_subject(namespace = None):
     '''the function generates a unique subject in the provided `namespace` based on
@@ -223,7 +223,7 @@ def pretty_rdf(uri):
         uri = uri.subject
     if type(uri) is URIRef:
         NS, symbol = uri_split(uri)
-        if str(NS).startswith('NS'):
+        if unicode(NS).startswith('NS'):
             pretty = symbol
         else:
             pretty = NS.lower() + ':' + symbol

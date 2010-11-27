@@ -131,12 +131,12 @@ class Store(object):
             self.reader.close()
             self.log('reader closed successfully')
         except Exception, e:
-            self.log('error on closing the reader ' + str(e))
+            self.log('error on closing the reader ' + unicode(e))
         try:
             self.writer.close()
             self.log('writer closed successfully')
         except Exception, e:
-            self.log('error on closing the writer ' + str(e))
+            self.log('error on closing the writer ' + unicode(e))
 
     #---------------------------------------------------------------------------
     # the reader interface
