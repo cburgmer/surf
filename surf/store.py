@@ -41,6 +41,7 @@ from plugin.manager import load_plugins, PluginNotFoundException, add_plugin_pat
 from plugin.reader import RDFReader
 from plugin.writer import RDFWriter
 from surf.rdf import URIRef
+from surf.query import Query
 
 __readers__ = manager.__readers__
 __writers__ = manager.__writers__
