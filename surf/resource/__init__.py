@@ -719,7 +719,7 @@ class Resource(object):
                         graph.add((value, predicate, self.subject))
         return graph
 
-    def __str__(self):
+    def __unicode__(self):
         """ Return `string` representation of the resource. """
 
         return '{%s : %s}' % (unicode(self.subject), unicode(self.uri))
