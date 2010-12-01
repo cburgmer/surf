@@ -5,7 +5,7 @@
 # cropped for simple usecase without git-svn available by cburgmer@ira.uka.de
 #
 # Generate an SVN-compatible diff against the tip of the tracking branch
-git diff --no-prefix HEAD~1 HEAD |
+git diff --no-prefix surfrdf |
 sed -e "s/^+++ .*/&     (working copy)/" -e "s/^--- .*/&        (revision )/" \
 -e "s/^diff --git [^[:space:]]*/Index:/" \
 -e "s/^index.*/===================================================================/"
