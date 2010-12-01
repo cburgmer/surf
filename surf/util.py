@@ -171,7 +171,7 @@ def uri_to_class(uri):
         surf.util.Ns1some_class
 
     '''
-    return new.classobj(unicode(uri_to_classname(uri)), (), {'uri':uri})
+    return new.classobj(str(uri_to_classname(uri)), (), {'uri':uri})
 
 def uuid_subject(namespace = None):
     '''the function generates a unique subject in the provided `namespace` based on
