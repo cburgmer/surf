@@ -1,6 +1,7 @@
 # -*- coding: UTF-8 -*-
 """ Module for sparql_protocol plugin tests. """
 
+import os
 from unittest import TestCase
 
 from sparql_protocol.reader import SparqlReaderException
@@ -10,6 +11,10 @@ import surf
 from surf.query import select
 from surf.rdf import Literal, URIRef
 from surf.exc import CardinalityException
+
+ENV = 'SURF_SPARQL_TEST'
+ENDPOINT = (os.environ[ENV] if ENV in os.environ and os.environ[ENV].strip()
+                            else "http://localhost:9980/sparql")
 
 class TestSparqlProtocol(TestCase):
     """ Tests for sparql_protocol plugin. """
@@ -30,7 +35,7 @@ class TestSparqlProtocol(TestCase):
         # maybe we can mock SPARQL endpoint.
         kwargs = {"reader": "sparql_protocol",
                   "writer" : "sparql_protocol",
-                  "endpoint" : "http://localhost:9980/sparql",
+                  "endpoint" : ENDPOINT,
                   "use_subqueries" : True,
                   "combine_queries" : True}
         
