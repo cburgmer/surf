@@ -109,3 +109,15 @@ class TestAllegro(TestCase):
 
         jane = session.get_resource("http://Jane", Person)
         self.assertEquals(len(jane.foaf_knows), 0)        
+
+    def test_contains(self):
+        session = self.rdf_session
+        Person = session.get_class(surf.ns.FOAF + "Person")
+
+        john = session.get_resource("http://John", Person)
+        john.foaf_name = "John"
+        john.update()
+
+        persons = Person.get_by(foaf_name="John")
+        self.assert_(any("John" in p.foaf_name for p in persons),
+                     '"John" not found in foaf_name')
