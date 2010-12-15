@@ -19,7 +19,7 @@ work. Choose the commit you want to create a patch for and run::
 
     $ git clone git://github.com/cburgmer/surf.git
     $ cd surf
-    $ git checkout -b mydiff surfrdf
+    $ git checkout -b mydiff origin/surfrdf
     $ git cherry-pick COMMIT_SHA1_ID
     $ wget https://github.com/cburgmer/surf/raw/master/git-svn-diff.sh
     $ sh git-svn-diff.sh
