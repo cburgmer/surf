@@ -1,10 +1,24 @@
 """ Module for rdflib plugin tests. """
 
+import os
 from unittest import TestCase
 
 import surf
 from surf.rdf import Literal, URIRef
 from surf.util import value_to_rdf
+
+SERVER_ENV = 'SURF_ALLEGRO_SERVER_TEST'
+SERVER = (os.environ[SERVER_ENV] if (SERVER_ENV in os.environ
+                                     and os.environ[SERVER_ENV].strip())
+                                 else "localhost")
+PORT_ENV = 'SURF_ALLEGRO_PORT_TEST'
+PORT = (int(os.environ[PORT_ENV]) if (PORT_ENV in os.environ
+                                  and os.environ[PORT_ENV].strip())
+                                  else 6789)
+CATALOG_ENV = 'SURF_ALLEGRO_CATALOG_TEST'
+CATALOG = (os.environ[CATALOG_ENV] if (CATALOG_ENV in os.environ
+                                       and os.environ[CATALOG_ENV].strip())
+                                   else "repositories")
 
 class TestAllegro(TestCase):
     """ Tests for sparql_protocol plugin. """
@@ -12,11 +26,10 @@ class TestAllegro(TestCase):
     def setUp(self):
         rdf_store = surf.Store(reader = "allegro_franz",
                                writer = "allegro_franz",
-                               server = "localhost",
-                               port = 6789,
-                               catalog = "repositories",
+                               server = SERVER,
+                               port = PORT,
+                               catalog = CATALOG,
                                repository = "test_surf")
-
         self.rdf_session = surf.Session(rdf_store)
         self.Logic = self.rdf_session.get_class(surf.ns.SURF.Logic)
 
