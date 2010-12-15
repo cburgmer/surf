@@ -1,2 +1,6 @@
 *~
 *.pyc
+*.py,cover
+*.egg-info/
+dist/
+build/
