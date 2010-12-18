@@ -88,6 +88,12 @@ class TestResultProxy(unittest.TestCase):
         self.store.expect_args({"get_by" : expected})
         list(self.proxy.get_by(foaf_knows = resource))
 
+    def test_slicing(self):
+        """ Test limit, offset. """
+
+        self.store.expect_args({"limit" : 10, "offset" : 5})
+        list(self.proxy[5:15])
+
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testName']
     unittest.main()

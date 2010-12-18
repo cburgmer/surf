@@ -453,4 +453,41 @@ class TestSparqlProtocol(TestCase):
         p = Person()
         self.assertTrue(p.context, "Default context not set")
 
+    def test_slicing(self):
+        """ Test that slicing a resource query works.  """
+        def get_names(persons):
+            names = []
+            for person in persons:
+                names.append(unicode(person.foaf_name.first))
+            return names
+
+        _, session = self._get_store_session()
+
+        Person = session.get_class(surf.ns.FOAF.Person)
+        for name in ['Elizabeth', 'Ella', 'Elvis', 'Emily', 'Emma', 'Erin']:
+            p = session.get_resource("http://%s.com/me" % name.lower(), Person)
+            p.foaf_name = name
+            p.save()
+
+        persons = Person.all().filter(foaf_name="(%s LIKE 'E%%')")\
+                              .order(surf.ns.FOAF.name)
+
+        self.assertEquals(persons[3].foaf_name.first, 'Emily')
+
+        try:
+            _ = persons[10]
+            self.assert_(True, "IndexError not raised")
+        except IndexError:
+            pass
+
+        self.assertEquals(get_names(persons[2:4]), ['Elvis', 'Emily'])
+
+        self.assertEquals(get_names(persons[:3]),
+                          ['Elizabeth', 'Ella', 'Elvis'])
+
+        self.assertEquals(get_names(persons[:]),
+                          ['Elizabeth', 'Ella', 'Elvis', 'Emily', 'Emma',
+                           'Erin'])
+
+        self.assertEquals(get_names(persons[0:4:2]), ['Elizabeth', 'Elvis'])
 
