@@ -2,6 +2,7 @@
 
 import os
 from unittest import TestCase
+import random
 
 import surf
 from surf.rdf import Literal, URIRef
@@ -121,3 +122,30 @@ class TestAllegro(TestCase):
         persons = Person.get_by(foaf_name="John")
         self.assert_(any("John" in p.foaf_name for p in persons),
                      '"John" not found in foaf_name')
+
+    def test_attr_order_by(self):
+        """ Test ordering of attribute value. """
+
+        session = self.rdf_session
+        Person = session.get_class(surf.ns.FOAF + "Person")
+
+        # First remove any previously created
+        for p in Person.all(): p.remove()
+
+        for i in range(0, 10):
+            person = session.get_resource("http://A%d" % i, Person)
+            person.foaf_name = "A%d" % i
+            person.save()
+
+        all_persons = list(Person.all())
+        random.shuffle(all_persons)
+
+        person = person = session.get_resource("http://A0", Person)
+        person.foaf_knows = all_persons
+        person.foaf_name = []
+        person.update()
+
+        persons = list(person.foaf_knows.order(surf.ns.FOAF["name"]).limit(1))
+        self.assertEquals(len(persons), 1)
+        # Unbound results sort earliest
+        self.assertEquals(persons[0].subject, URIRef("http://A0"))
