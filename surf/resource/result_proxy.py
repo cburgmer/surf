@@ -168,6 +168,8 @@ class ResultProxy(object):
             edges = []
             for edge in name.split('__'):
                 attr, direct = attr2rdf(edge)
+                if attr is None:
+                    raise ValueError("Not an attribute %r" % edge)
                 edges.append((attr, direct))
 
             # Assume by plain strings user means literals
