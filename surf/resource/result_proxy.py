@@ -48,7 +48,7 @@ class ResultProxy(object):
 
     """
 
-    def __init__(self, params = {}, store = None, instancemaker = None):
+    def __init__(self, params={}, store=None, instancemaker=None):
         self.__params = params
         self.__get_by_response = None
 
@@ -97,7 +97,7 @@ class ResultProxy(object):
         params["offset"] = value
         return ResultProxy(params)
 
-    def full(self, only_direct = False):
+    def full(self, only_direct=False):
         """ Enable eager-loading of resource attributes.
 
         If ``full`` is set to `True`, returned resources will have attributes
@@ -115,7 +115,7 @@ class ResultProxy(object):
         params["only_direct"] = only_direct
         return ResultProxy(params)
 
-    def order(self, value = True):
+    def order(self, value=True):
         """ Request results to be ordered.
 
         If no arguments are specified, resources will be ordered by their
@@ -173,7 +173,7 @@ class ResultProxy(object):
             # Assume by plain strings user means literals
             if type(value) in [str, unicode]:
                 value = Literal(value)
-            
+
             # If value has subject attribute, this must be Resource, 
             # take its subject.
             if hasattr(value, "subject"):

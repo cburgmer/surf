@@ -49,7 +49,7 @@ def to_json(graph):
     the specification of rdf-json for further details please see the following:
         http://n2.talis.com/wiki/RDF_JSON_Specification
     '''
-    value_types = {URIRef:'uri',Literal:'literal',BNode:'bnode'}
+    value_types = {URIRef:'uri', Literal:'literal', BNode:'bnode'}
 
     json_root = {}
     subjects = []
@@ -69,7 +69,7 @@ def to_json(graph):
         for p in predicates:
             json_values = []
 
-            for v in graph.objects(s,p):
+            for v in graph.objects(s, p):
                 value = {}
                 value['value'] = v
                 value['type'] = value_types[type(v)]

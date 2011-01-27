@@ -53,12 +53,12 @@ from surf.util import uri_to_class, uuid_subject, value_to_rdf
 a = RDF.type
 class ResourceMeta(type):
     def __new__(mcs, classname, bases, class_dict):
-        ResourceClass = super(ResourceMeta, mcs).__new__(mcs, classname, bases, 
+        ResourceClass = super(ResourceMeta, mcs).__new__(mcs, classname, bases,
                                                          class_dict)
-        
+
         if "uri" not in class_dict:
             ResourceClass.uri = None
-            
+
         return ResourceClass
 
     def __getattr__(self, attr_name):
@@ -158,8 +158,8 @@ class Resource(object):
     __metaclass__ = ResourceMeta
     _dirty_instances = set()
 
-    def __init__(self, subject = None, block_auto_load = False, context = None,
-                 namespace = None):
+    def __init__(self, subject=None, block_auto_load=False, context=None,
+                 namespace=None):
         """ Initialize a Resource, with the `subject` (a URI - either a string 
         or a URIRef). 
         
@@ -172,21 +172,21 @@ class Resource(object):
         attributes associated with the subject of the resource.
 
         """
-        
+
         if subject is None:
             subject = uuid_subject(namespace)
         elif not type(subject) in [URIRef, BNode]:
             subject = URIRef(subject)
 
         self.__subject = subject
-        
+
         if context == NO_CONTEXT:
             self.__context = None
         elif context:
             self.__context = URIRef(unicode(context))
         elif self.session and self.store_key:
             self.__context = self.session[self.store_key].default_context
-        
+
         self.__expired = False
         self.__rdf_direct = {}
         self.__rdf_direct[a] = [self.uri]
@@ -206,7 +206,7 @@ class Resource(object):
     subject = property(lambda self: self.__subject)
     """ The subject of the resource. """
 
-    namespaces = property(fget = lambda self: self.__namespaces)
+    namespaces = property(fget=lambda self: self.__namespaces)
     """ The namespaces. """
 
     def set_dirty(self, dirty):
@@ -217,7 +217,7 @@ class Resource(object):
         # adding this instance to "dirty_instances" set
         if dirty and not self in self._dirty_instances:
             self._dirty_instances.add(self)
-            
+
         # Setting dirty to "False" means: 
         # removing this instance from "dirty_instances" set
         if not dirty and self in self._dirty_instances:
@@ -226,13 +226,13 @@ class Resource(object):
     def get_dirty(self):
         return self in self._dirty_instances
 
-    dirty = property(fget = get_dirty, fset = set_dirty)
+    dirty = property(fget=get_dirty, fset=set_dirty)
     """ Reflects the `dirty` state of the resource. """
 
-    rdf_direct = property(fget = lambda self: self.__rdf_direct)
+    rdf_direct = property(fget=lambda self: self.__rdf_direct)
     """ Direct predicates (`outgoing` predicates). """
 
-    rdf_inverse = property(fget = lambda self: self.__rdf_inverse)
+    rdf_inverse = property(fget=lambda self: self.__rdf_inverse)
     """ Inverse predicates (`incoming` predicates). """
 
     def __set_context(self, value):
@@ -241,8 +241,8 @@ class Resource(object):
 
         self.__context = value
 
-    context = property(fget = lambda self: self.__context,
-                       fset = __set_context)
+    context = property(fget=lambda self: self.__context,
+                       fset=__set_context)
     """ Context (graph) where triples constituting this resource reside in.
 
     In case of SPARQL and SPARUL, "context" is the same thing as "graph".
@@ -276,9 +276,9 @@ class Resource(object):
         instance.remove()
 
     """
-    
+
     @classmethod
-    def _instance(cls, subject, vals, context = None, store = None, block_auto_load = True):
+    def _instance(cls, subject, vals, context=None, store=None, block_auto_load=True):
         """
         Create an instance from the `subject` and it's associated
         `concept` (`vals`) URIs.
@@ -291,21 +291,21 @@ class Resource(object):
         # If there are none, don't instantiate Resource, return URIRef. 
         if not vals:
             return subject
-            
+
         # Don't have reference to session, cannot instantiate Resource
         if not cls.session:
             return None
-            
+
         uri = vals[0]
         # vals might be an iterator, but we want each 
         # element from it as separate argument, so
         # converting to list.
         classes = map(uri_to_class, list(vals[1:]))
 
-        return cls.session.map_instance(uri, subject, classes = classes,
-                                        block_auto_load = block_auto_load,
-                                        context = context,
-                                        store = store)    
+        return cls.session.map_instance(uri, subject, classes=classes,
+                                        block_auto_load=block_auto_load,
+                                        context=context,
+                                        store=store)
 
     @classmethod
     def _lazy(cls, value):
@@ -343,7 +343,7 @@ class Resource(object):
         """ Bind the 'resources' registered namespaces to the supplied `graph`.
 
         """
-        
+
         if graph is not None:
             for prefix in self.namespaces:
                 graph.namespace_manager.bind(prefix, self.namespaces[prefix])
@@ -378,7 +378,7 @@ class Resource(object):
 
         def make_values_source(values, rdf_values):
             """ Return callable that returns stored values for this attr. """
-            
+
             def setattr_values_source():
                 """ Return stored values for this attribute. """
 
@@ -398,9 +398,9 @@ class Resource(object):
             if type(value) is ResourceValue:
                 pass
             else:
-                if type(value) not in [list, tuple]: 
+                if type(value) not in [list, tuple]:
                     value = [value]
-                    
+
                 value = map(value_to_rdf, value)
                 values_source = make_values_source(value, rdf_dict[predicate])
                 value = ResourceValue(values_source, self, name)
@@ -458,7 +458,7 @@ class Resource(object):
         """
 
         predicate, direct = attr2rdf(attr_name)
-            
+
         if not predicate:
             raise AttributeError('Not a predicate: %s' % attr_name)
 
@@ -468,7 +468,7 @@ class Resource(object):
 
             def getattr_values_source():
                 """ Load and return values for this attribute. """
-                
+
                 if do_query:
                     store = resource.session[resource.store_key]
                     # Request to triple store
@@ -513,7 +513,7 @@ class Resource(object):
             attr_name = rdf2attr(attr_name, True)
 
         return getattr(self, attr_name)
-    
+
     def load(self):
         """
         Load all attributes from the data store:
@@ -546,7 +546,7 @@ class Resource(object):
 
 
     @classmethod
-    def get_by_attribute(cls, attributes, context = None):
+    def get_by_attribute(cls, attributes, context=None):
         """
         Retrieve all `instances` from the data store that have the specified `attributes`
         and are of `rdf:type` of the resource class
@@ -564,7 +564,7 @@ class Resource(object):
         subjects = {}
         subjects.update(cls.session[cls.store_key].instances_by_attribute(cls, direct_attributes, True, context))
         subjects.update(cls.session[cls.store_key].instances_by_attribute(cls, inverse_attributes, False, context))
-        
+
         instances = []
         for s, types in subjects.items():
             if not isinstance(s, URIRef):
@@ -576,7 +576,7 @@ class Resource(object):
                 concepts = types
 
             instances.append(cls._instance(s, concepts))
-        
+
         return instances
 
     @classmethod
@@ -612,15 +612,15 @@ class Resource(object):
         context = params.get("context", None)
         instance = cls._instance(subject,
                                  [rdf_type],
-                                 context = context,
-                                 store = cls.store_key,
-                                 block_auto_load = False)
+                                 context=context,
+                                 store=cls.store_key,
+                                 block_auto_load=False)
 
         instance.__set_predicate_values(data.get("direct", {}), True)
         instance.__set_predicate_values(data.get("inverse", {}), False)
         instance.__full = bool(params.get("full"))
         # __setattr__ marked it as dirty but it's freshly loaded!
-        instance.dirty = False 
+        instance.dirty = False
 
         return instance
 
@@ -632,10 +632,10 @@ class Resource(object):
             return []
 
         store = cls.session[cls.store_key]
-        proxy = ResultProxy(store = store,
-                            instancemaker = cls.__instancemaker)
+        proxy = ResultProxy(store=store,
+                            instancemaker=cls.__instancemaker)
 
-        return proxy.get_by(rdf_type = cls.uri)
+        return proxy.get_by(rdf_type=cls.uri)
 
     @classmethod
     def get_by(cls, **filters):
@@ -659,8 +659,8 @@ class Resource(object):
         # Client specified rdf_type(s) override our own.
         if not "rdf_type" in filters:
             filters["rdf_type"] = cls.uri
-        proxy = ResultProxy(store = store,
-                            instancemaker = cls.__instancemaker)
+        proxy = ResultProxy(store=store,
+                            instancemaker=cls.__instancemaker)
 
         return proxy.get_by(**filters)
 
@@ -674,13 +674,13 @@ class Resource(object):
         inverse_attribute_name = unicode(rdf2attr(uri, not direct))
 
         store = self.session[self.store_key]
-        proxy = ResultProxy(store = store,
-                            instancemaker = self.__instancemaker)
+        proxy = ResultProxy(store=store,
+                            instancemaker=self.__instancemaker)
 
         kwargs = {inverse_attribute_name : self.subject}
         return proxy.get_by(**kwargs)
 
-    def serialize(self, format = 'xml', direct = False):
+    def serialize(self, format='xml', direct=False):
         """
         Return a serialized version of the internal graph represenatation
         of the resource, the format is the same as expected by rdflib's graph
@@ -695,12 +695,12 @@ class Resource(object):
 
         """
 
-        graph = self.graph(direct = direct)
+        graph = self.graph(direct=direct)
         if format == 'json':
             return to_json(graph)
-        return graph.serialize(format = format)
+        return graph.serialize(format=format)
 
-    def graph(self, direct = True):
+    def graph(self, direct=True):
         """
         Return an `rdflib` `ConjunctiveGraph` represenation of the current `resource`
 
@@ -730,10 +730,10 @@ class Resource(object):
 
         self.session[self.store_key].save(self)
 
-    def remove(self, inverse = False):
+    def remove(self, inverse=False):
         """ Remove the `resource` from the data `store`. """
 
-        self.session[self.store_key].remove(self, inverse = inverse)
+        self.session[self.store_key].remove(self, inverse=inverse)
 
     def update(self):
         """ Update the resource in the data `store`.
@@ -762,8 +762,8 @@ class Resource(object):
                  'xml':'application/rdf+xml',
     }
 
-    def load_from_source(self, data = None, file = None, location = None,
-                         format = None):
+    def load_from_source(self, data=None, file=None, location=None,
+                         format=None):
         """
         Load the `resource` from a source (uri, file or string rdf data).
 
@@ -774,7 +774,7 @@ class Resource(object):
             format = 'application/rdf+xml'
         elif format in self.formats:
             format = self.formats[format]
-        graph.parse(data = data, file = file, location = location, format = format)
+        graph.parse(data=data, file=file, location=location, format=format)
         self.set(graph)
 
     def set(self, graph):
@@ -824,7 +824,7 @@ class Resource(object):
         return None
 
     @classmethod
-    def concept(cls, subject, store = None):
+    def concept(cls, subject, store=None):
         """ Return the Resources `concept` uri (type).
 
         If parameter ``store`` is specified, concept will be retrieved from
@@ -866,7 +866,7 @@ class Resource(object):
         are both of type `Resource`, False otherwise.
 
         """
-        
+
         if isinstance(other, Resource):
             return self.subject == other.subject
 

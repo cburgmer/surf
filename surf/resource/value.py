@@ -79,7 +79,7 @@ class ResourceValue(list):
             raise NoResultFound('list is empty')
         else:
             raise MultipleResultsFound('list has more elements than one')
-    one = property(fget = get_one)
+    one = property(fget=get_one)
 
     def get_first(self):
         ''' return the first `resource` or None otherwise.
@@ -90,7 +90,7 @@ class ResourceValue(list):
             return self[0]
         else:
             return None
-    first = property(fget = get_first)
+    first = property(fget=get_first)
 
     def set_dirty(self, dirty):
         ''' mark this `resource` as **dirty**. By doing so, `SuRF` will refresh it's
@@ -115,7 +115,7 @@ class ResourceValue(list):
         # For now, load all values. In future, if the data is not yet loaded,
         # we can optimize and do ASK query here. 
         self.__prepare_values()
-        return self.to_rdf(key) in self.__rdf_values 
+        return self.to_rdf(key) in self.__rdf_values
 
     def __getitem__(self, key):
         self.__prepare_values()
@@ -163,7 +163,7 @@ class ResourceValue(list):
         self.__rdf_values.remove(self.to_rdf(value))
         return list.remove(self, value)
 
-    def pop(self, i = -1):
+    def pop(self, i= -1):
         self.__prepare_values()
 
         self.set_dirty(True)
@@ -203,13 +203,13 @@ class ResourceValue(list):
         '''
         return self.__query_attribute().offset(value)
 
-    def full(self, only_direct = False):
+    def full(self, only_direct=False):
         ''' get the `full` `query` attribute. Syntactic sugar
         for :meth:`surf.resource.Resource.query_attribute` method.
         '''
         return self.__query_attribute().full(only_direct)
 
-    def order(self, value = True):
+    def order(self, value=True):
         ''' get the `order` `query` attribute. Syntactic sugar
         for :meth:`surf.resource.Resource.query_attribute` method.
         '''

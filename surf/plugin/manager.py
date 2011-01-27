@@ -59,7 +59,7 @@ def __init_plugins(plugins, entry_point):
     for entrypoint in pkg_resources.iter_entry_points(entry_point):
         plugin_class = entrypoint.load()
         plugins[entrypoint.name] = plugin_class
-        log.info('loaded plugin [%s]'%entrypoint.name)
+        log.info('loaded plugin [%s]' % entrypoint.name)
 
 def load_plugins(reload=False):
     ''' Call this method to load the plugins into the manager. The method is called

@@ -376,11 +376,11 @@ class RDFQueryReader(RDFReader):
                 elif i == last:
                     if v not in data:
                         data[v] = []
-                    
+
                     value = row.get(keys[i + 1])
                     if value:
                         data[v].append(value)
-        
+
         return results
 
     # public interface

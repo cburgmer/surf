@@ -74,15 +74,15 @@ class QueryUpdate(Query):
         self._remote_uri = None
         self._clear_uri = None
 
-    query_into_uri = property(fget = lambda self: self._into_uri)
+    query_into_uri = property(fget=lambda self: self._into_uri)
     ''''''
-    query_from_uri = property(fget = lambda self: self._from_uri)
+    query_from_uri = property(fget=lambda self: self._from_uri)
     ''''''
-    query_template = property(fget = lambda self: self._template)
+    query_template = property(fget=lambda self: self._template)
     ''''''
-    query_remote_uri = property(fget = lambda self: self._remote_uri)
+    query_remote_uri = property(fget=lambda self: self._remote_uri)
     ''''''
-    query_clear_uri = property(fget = lambda self: self._clear_uri)
+    query_clear_uri = property(fget=lambda self: self._clear_uri)
     ''''''
 
     def into(self, *uris):
@@ -130,11 +130,11 @@ class QueryUpdate(Query):
         return SparulTranslator(self).translate()
 
 
-def insert(data = False):
+def insert(data=False):
     q_type = data and INSERT_DATA or INSERT
     return QueryUpdate(q_type)
 
-def delete(data = False):
+def delete(data=False):
     q_type = data and DELETE_DATA or DELETE
     return QueryUpdate(q_type)
 

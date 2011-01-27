@@ -56,14 +56,14 @@ class Rest(object):
         # Make sure resources_namespace is an instance of Namespace
         if not isinstance(resources_namespace, Namespace):
             resources_namespace = Namespace(resources_namespace)
-        
+
         self.__namespace = resources_namespace
 
     # the REST methods
-    def index(self, offset = None, limit = None):
+    def index(self, offset=None, limit=None):
         '''**REST** : GET /: All items in the collection,
         returns all `instances` for the current `Resource`'''
-        return self.__concept_class.all(offset = offset, limit = limit)
+        return self.__concept_class.all(offset=offset, limit=limit)
 
     def create(self, json_params):
         '''**REST** : POST /: Create a new item,

@@ -40,23 +40,23 @@ from surf.plugin.reader import RDFReader
 from surf.rdf import BNode, ConjunctiveGraph, Literal, RDF, URIRef
 
 class InvalidResourceException(Exception):
-    def __init__(self,*args,**kwargs):
-        super(InvalidResourceException,self).__init__(self,*args,**kwargs)
+    def __init__(self, *args, **kwargs):
+        super(InvalidResourceException, self).__init__(self, *args, **kwargs)
 
 class RDFWriter(Plugin):
     """ Super class for all surf Writer plugins. """
 
-    def __init__(self,reader, *args, **kwargs):
+    def __init__(self, reader, *args, **kwargs):
         Plugin.__init__(self, *args, **kwargs)
-        if isinstance(reader,RDFReader):
+        if isinstance(reader, RDFReader):
             self.__reader = reader
         else:
-            raise ValueError('The reader plugin must be of type RDFReader not %s'%(str(type(reader))))
+            raise ValueError('The reader plugin must be of type RDFReader not %s' % (str(type(reader))))
 
-    reader = property(fget = lambda self: self.__reader)
+    reader = property(fget=lambda self: self.__reader)
 
     #protected interface
-    def _clear(self,context = None):
+    def _clear(self, context=None):
         pass
 
     def _save(self, *resources):
@@ -69,20 +69,20 @@ class RDFWriter(Plugin):
         pass
 
     def _size(self):
-        return -1
+        return - 1
 
-    def _add_triple(self, s = None, p = None, o = None, context = None):
+    def _add_triple(self, s=None, p=None, o=None, context=None):
         pass
 
-    def _set_triple(self, s = None, p = None, o = None, context = None):
+    def _set_triple(self, s=None, p=None, o=None, context=None):
         pass
 
-    def _remove_triple(self, s = None, p = None, o = None, context = None):
+    def _remove_triple(self, s=None, p=None, o=None, context=None):
         pass
 
 
     #public interface
-    def clear(self, context = None):
+    def clear(self, context=None):
         """ Remove all triples from the `store`.
 
         If ``context`` is specified, only the specified context will
@@ -90,7 +90,7 @@ class RDFWriter(Plugin):
 
         """
 
-        self._clear(context = context)
+        self._clear(context=context)
 
     def save(self, *resources):
         """ Replace the ``*resources`` in store with their current state. """
@@ -127,7 +127,7 @@ class RDFWriter(Plugin):
         return self._size()
 
     # triple level access methods
-    def add_triple(self, s = None, p = None, o = None, context = None):
+    def add_triple(self, s=None, p=None, o=None, context=None):
         """ Add a triple to the `store`, in the specified ``context``.
 
         `None` can be used as a wildcard.
@@ -136,23 +136,23 @@ class RDFWriter(Plugin):
 
         self._add_triple(s, p, o, context)
 
-    def set_triple(self, s = None, p = None, o = None, context = None):
+    def set_triple(self, s=None, p=None, o=None, context=None):
         """ Replace a triple in the `store` and specified ``context``.
 
         `None` can be used as a wildcard.
 
         """
 
-        self._set_triple(s,p,o,context)
+        self._set_triple(s, p, o, context)
 
-    def remove_triple(self,s=None,p=None,o=None, context=None):
+    def remove_triple(self, s=None, p=None, o=None, context=None):
         """ Remove a triple from the `store`, from the specified ``context``.
 
         `None` can be used as a wildcard.
 
         """
 
-        self._remove_triple(s,p,o,context)
+        self._remove_triple(s, p, o, context)
 
     # management
     def close(self):
@@ -160,7 +160,7 @@ class RDFWriter(Plugin):
 
         pass
 
-    def index_triples(self,**kwargs):
+    def index_triples(self, **kwargs):
         """ Perform `index` of the `triples` if such functionality is present.
 
         Return `True` if operation successful.
@@ -169,7 +169,7 @@ class RDFWriter(Plugin):
 
         return False
 
-    def load_triples(self,**kwargs):
+    def load_triples(self, **kwargs):
         """ Load `triples` from supported `sources` if such functionality is
         present.
 
