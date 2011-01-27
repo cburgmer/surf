@@ -151,11 +151,11 @@ class RDFQueryReader(RDFReader):
             query.offset(params["offset"])
 
         if "get_by" in params:
+            edge_idx = 0
             for edges, values in params["get_by"]:
                 last_edge = "?s"
 
                 # Build path to attribute, value pair
-                edge_idx = 0
                 for attribute, direct in edges[:-1]:
                     edge_idx += 1
                     edge_variable = "?e%d" % edge_idx

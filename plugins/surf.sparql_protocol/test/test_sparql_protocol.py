@@ -208,6 +208,28 @@ class TestSparqlProtocol(TestCase):
         self.assertEquals(groups.first().__class__.__name__,
                           jclub.__class__.__name__)
 
+    def test_get_by_indirect_multiple(self):
+        """ Test reader.get_by() with multiple non-direct query paths """
+
+        _, session = self._get_store_session()
+        Person = session.get_class(surf.ns.FOAF + "Person")
+        Group = session.get_class(surf.ns.FOAF + "Group")
+
+        john = session.get_resource("http://John", Person)
+
+        jay = session.get_resource("http://Jay", Person)
+        jay.foaf_name = 'Jay'
+        jay.foaf_knows = john
+        jay.save()
+
+        jclub = session.get_resource("http://jclub", Group)
+        jclub.foaf_name = 'J-Group'
+        jclub.foaf_member = jay
+        jclub.save()
+
+        persons = Person.get_by(foaf_knows__foaf_name='John',
+                                is_foaf_member_of__foaf_name='J-Group')
+        self.assertEquals(persons.first().foaf_name.first, "Jay")
 
     def test_get_by_alternatives(self):
         """ Test reader.get_by() with several values """
