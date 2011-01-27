@@ -591,7 +591,8 @@ class Resource(object):
 
         rdf_type = None
         # Let's see if rdf:type was specified in query parameters
-        for predicate, value, _ in params.get("get_by", []):
+        for edges, value in params.get("get_by", []):
+            predicate, _ = edges[-1]
             # if rdf:type was filtered against several values,
             # we cannot use it for assigning type. 
             # Check here if value is list-like.

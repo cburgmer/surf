@@ -165,7 +165,11 @@ class ResultProxy(object):
         # to work incorrectly.
         params.setdefault("get_by", [])
         for name, value in kwargs.items():
-            attr, direct = attr2rdf(name)
+            edges = []
+            for edge in name.split('__'):
+                attr, direct = attr2rdf(edge)
+                edges.append((attr, direct))
+
             # Assume by plain strings user means literals
             if type(value) in [str, unicode]:
                 value = Literal(value)
@@ -174,8 +178,8 @@ class ResultProxy(object):
             # take its subject.
             if hasattr(value, "subject"):
                 value = value.subject
-             
-            params["get_by"].append((attr, value, direct))
+
+            params["get_by"].append((edges, value))
         return ResultProxy(params)
 
     def filter(self, **kwargs):

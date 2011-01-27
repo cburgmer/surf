@@ -138,6 +138,12 @@ class RDFQueryReader(RDFReader):
     def __apply_limit_offset_order_get_by_filter(self, params, query):
         """ Apply limit, offset, order parameters to query. """
 
+        def order_terms(a, b, c, direct):
+            if direct:
+                return (a, b, c)
+            else:
+                return (c, b, a)
+
         if "limit" in params:
             query.limit(params["limit"])
 
@@ -145,19 +151,36 @@ class RDFQueryReader(RDFReader):
             query.offset(params["offset"])
 
         if "get_by" in params:
-            for attribute, values, direct  in params["get_by"]:
-                if direct:
-                    order_terms = lambda a, b ,c: (a, b, c)
-                else:
-                    order_terms = lambda a, b ,c: (c, b, a)
-                    
+            for edges, values in params["get_by"]:
+                last_edge = "?s"
+
+                # Build path to attribute, value pair
+                edge_idx = 0
+                for attribute, direct in edges[:-1]:
+                    edge_idx += 1
+                    edge_variable = "?e%d" % edge_idx
+
+                    query.where(order_terms(last_edge,
+                                            attribute,
+                                            edge_variable,
+                                            direct))
+                    last_edge = edge_variable
+
+                # Attach value query to path
+                attribute, direct = edges[-1]
                 if hasattr(values, "__iter__"):
                     where_clause = Union()
                     for value in values:
-                        where_clause.append(order_terms("?s", attribute, value))
+                        where_clause.append(order_terms(last_edge,
+                                                        attribute,
+                                                        value,
+                                                        direct))
                 else:
-                    where_clause = order_terms("?s", attribute, values) 
-                
+                    where_clause = order_terms(last_edge,
+                                               attribute,
+                                               values,
+                                               direct)
+
                 query.where(where_clause)
 
         if "filter" in params:

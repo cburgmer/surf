@@ -63,8 +63,8 @@ class TestResultProxy(unittest.TestCase):
 
     def test_get_by(self):
         """ Test get_by. """
-        
-        expected = [(surf.ns.FOAF["name"], "Jane", True)]
+
+        expected = [([(surf.ns.FOAF["name"], True)], "Jane")]
         self.store.expect_args({"get_by" : expected})
         list(self.proxy.get_by(foaf_name = "Jane"))
 
@@ -84,7 +84,7 @@ class TestResultProxy(unittest.TestCase):
         """ Test that get_by accepts Resources as values. """
         
         resource = MockResource()
-        expected = [(surf.ns.FOAF["knows"], resource.subject, True)]
+        expected = [([(surf.ns.FOAF["knows"], True)], resource.subject)]
         self.store.expect_args({"get_by" : expected})
         list(self.proxy.get_by(foaf_knows = resource))
 
