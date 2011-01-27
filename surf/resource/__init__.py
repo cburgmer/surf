@@ -592,13 +592,14 @@ class Resource(object):
         rdf_type = None
         # Let's see if rdf:type was specified in query parameters
         for edges, value in params.get("get_by", []):
-            predicate, _ = edges[-1]
-            # if rdf:type was filtered against several values,
-            # we cannot use it for assigning type. 
-            # Check here if value is list-like.
-            if predicate == a and not hasattr(value, "__iter__"):
-                rdf_type = value
-                break
+            if len(edges) == 1:
+                predicate, _ = edges[0]
+                # if rdf:type was filtered against several values,
+                # we cannot use it for assigning type. 
+                # Check here if value is list-like.
+                if predicate == a and not hasattr(value, "__iter__"):
+                    rdf_type = value
+                    break
 
         # In results?
         if not rdf_type and "direct" in data and a in data["direct"]:

@@ -171,6 +171,44 @@ class TestSparqlProtocol(TestCase):
         persons = list(persons)
         self.assertTrue(persons[0].foaf_name.first, "Jay")
 
+    def test_get_by_indirect(self):
+        """ Test reader.get_by() with non-direct query path """
+
+        _, session = self._get_store_session()
+        Person = session.get_class(surf.ns.FOAF + "Person")
+
+        john = session.get_resource("http://John", Person)
+
+        jay = session.get_resource("http://Jay", Person)
+        jay.foaf_name = 'Jay'
+        jay.foaf_knows = john
+        jay.save()
+
+        persons = Person.get_by(foaf_knows__foaf_name='John')
+        self.assertEquals(persons.first().foaf_name.first, "Jay")
+
+    def test_get_by_indirect_with_rdf_type(self):
+        """ Test reader.get_by() with non-direct query path asking for a rdf
+        type
+        """
+
+        _, session = self._get_store_session()
+        Person = session.get_class(surf.ns.FOAF + "Person")
+        Group = session.get_class(surf.ns.FOAF + "Group")
+
+        john = session.get_resource("http://John", Person)
+
+        jclub = session.get_resource("http://jclub", Group)
+        jclub.foaf_member = john
+        jclub.save()
+
+        groups = Group.get_by(foaf_member__rdf_type=surf.ns.FOAF.Person)
+        # TODO broken, see http://code.google.com/p/surfrdf/issues/detail?id=54
+        #self.assertEquals(type(groups.first()), type(Group.all().first()))
+        self.assertEquals(groups.first().__class__.__name__,
+                          jclub.__class__.__name__)
+
+
     def test_get_by_alternatives(self):
         """ Test reader.get_by() with several values """
 
