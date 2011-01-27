@@ -2,6 +2,9 @@
 *.pyc
 *.py,cover
 *.egg-info/
+.project
+.pydevproject
+.settings
 dist/
 build/
 env/
