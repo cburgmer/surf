@@ -33,7 +33,7 @@
 
 from surf.exc import NoResultFound, MultipleResultsFound
 from surf.rdf import Literal, URIRef
-from surf.util import attr2rdf
+from surf.util import attr2rdf, value_to_rdf
 
 class ResultProxy(object):
     """ Interface to :meth:`surf.store.Store.get_by`.
@@ -186,14 +186,14 @@ class ResultProxy(object):
         for name, value in kwargs.items():
             edges = self.__split_attribute_edges(name)
 
-            # Assume by plain strings user means literals
-            if type(value) in [str, unicode]:
-                value = Literal(value)
-
-            # If value has subject attribute, this must be Resource, 
-            # take its subject.
             if hasattr(value, "subject"):
+                # If value has subject attribute, this must be Resource, 
+                # take its subject.
                 value = value.subject
+            elif hasattr(value, "__iter__"):
+                value = map(value_to_rdf, value)
+            else:
+                value = value_to_rdf(value)
 
             params["get_by"].append((edges, value))
         return ResultProxy(params)
