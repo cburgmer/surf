@@ -58,8 +58,9 @@ class TestResultProxy(unittest.TestCase):
     def test_order_desc(self):
         """ Test order, desc. """
 
-        self.store.expect_args({"order" : "some_attr", "desc" : True})
-        list(self.proxy.order("some_attr").desc())
+        self.store.expect_args({"order" : [(surf.ns.FOAF.name, True)],
+                                "desc" : True})
+        list(self.proxy.order("foaf_name").desc())
 
     def test_get_by(self):
         """ Test get_by. """
