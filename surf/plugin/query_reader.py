@@ -198,14 +198,29 @@ class RDFQueryReader(RDFReader):
                     query.order_by("DESC(?s)")
                 else:
                     query.order_by("?s")
-            else:
+            elif params["order"] != False:
                 # Match another variable, order by it
-                query.optional_group(("?s", params["order"], "?o"))
-                if "desc" in params and params["desc"]:
-                    query.order_by("DESC(?o)")
-                else:
-                    query.order_by("?o")
+                edges = params["order"]
+                edge_idx = 0
+                last_edge = "?s"
+                where_clauses = []
 
+                # Build path to attribute, value pair for which we sort
+                for attribute, direct in edges:
+                    edge_idx += 1
+                    edge_variable = "?o%d" % edge_idx
+
+                    where_clauses.append(order_terms(last_edge,
+                                                     attribute,
+                                                     edge_variable,
+                                                     direct))
+                    last_edge = edge_variable
+
+                query.optional_group(*where_clauses)
+                if "desc" in params and params["desc"]:
+                    query.order_by("DESC(%s)" % last_edge)
+                else:
+                    query.order_by(last_edge)
 
         return query
 

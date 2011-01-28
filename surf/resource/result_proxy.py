@@ -32,7 +32,7 @@
 """ Module for ResultProxy. """
 
 from surf.exc import NoResultFound, MultipleResultsFound
-from surf.rdf import Literal
+from surf.rdf import Literal, URIRef
 from surf.util import attr2rdf
 
 class ResultProxy(object):
@@ -133,6 +133,13 @@ class ResultProxy(object):
         """
 
         params = self.__params.copy()
+        if type(value) in [str, unicode]:
+            value = self.__split_attribute_edges(value)
+        elif isinstance(value, URIRef):
+            value = [(value, True)]
+        elif type(value) != bool:
+            raise TypeError("Invalid type specified %r" % type(value))
+
         params["order"] = value
         return ResultProxy(params)
 
@@ -142,6 +149,18 @@ class ResultProxy(object):
         params = self.__params.copy()
         params["desc"] = True
         return ResultProxy(params)
+
+    def __split_attribute_edges(self, name):
+        """ Allow specifying indirect attributes by giving a path of properties
+        from the object up to the requested attribute """
+        edges = []
+        for edge in name.split('__'):
+            attr, direct = attr2rdf(edge)
+            if attr is None:
+                raise ValueError("Not an attribute %r" % edge)
+            edges.append((attr, direct))
+
+        return edges
 
     def get_by(self, **kwargs):
         """ Add filter conditions.
@@ -165,12 +184,7 @@ class ResultProxy(object):
         # to work incorrectly.
         params.setdefault("get_by", [])
         for name, value in kwargs.items():
-            edges = []
-            for edge in name.split('__'):
-                attr, direct = attr2rdf(edge)
-                if attr is None:
-                    raise ValueError("Not an attribute %r" % edge)
-                edges.append((attr, direct))
+            edges = self.__split_attribute_edges(name)
 
             # Assume by plain strings user means literals
             if type(value) in [str, unicode]:

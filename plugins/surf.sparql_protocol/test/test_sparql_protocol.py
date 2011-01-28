@@ -294,6 +294,53 @@ class TestSparqlProtocol(TestCase):
         self.assertEquals(len(persons), 1)
         self.assertEquals(persons[0].subject, URIRef("http://A9"))
 
+    def test_order_by_indirect_attr(self):
+        """ Test ordering by attribute of another object. """
+
+        _, session = self._get_store_session()
+        Person = session.get_class(surf.ns.FOAF + "Person")
+        Group = session.get_class(surf.ns.FOAF + "Group")
+
+        group1 = session.get_resource("http://mclub", Group)
+        group1.foaf_name = 'Group1'
+        group1.foaf_member = [URIRef("http://Mary")]
+        group1.save()
+
+        group2 = session.get_resource("http://jclub", Group)
+        group2.foaf_name = 'Group2'
+        group2.foaf_member = [URIRef("http://Jane")]
+        group2.save()
+
+        persons = list(Person.all().order("is_foaf_member_of__foaf_name"))
+        self.assertEquals(len(persons), 3)
+        # Undefined sort first
+        self.assertEquals([p.subject for p in persons],
+                          [URIRef("http://John"), URIRef("http://Mary"),
+                           URIRef("http://Jane")])
+
+    def test_order_by_indirect_attr_multiple_values(self):
+        """ Test ordering by attribute of another object with multiple values.
+        """
+
+        _, session = self._get_store_session()
+        Person = session.get_class(surf.ns.FOAF + "Person")
+        Group = session.get_class(surf.ns.FOAF + "Group")
+
+        group1 = session.get_resource("http://group1", Group)
+        group1.foaf_name = 'Group1'
+        group1.foaf_member = [URIRef("http://Mary")]
+        group1.save()
+
+        group2 = session.get_resource("http://group2", Group)
+        group2.foaf_name = 'Group2'
+        group2.foaf_member = [URIRef("http://Jane"), URIRef("http://John")]
+        group2.save()
+
+        groups = list(Group.all().order("foaf_member__foaf_name"))
+        self.assertEquals(len(groups), 2)
+        self.assertEquals([g.subject for g in groups],
+                          [URIRef("http://group2"), URIRef("http://group1")])
+
     def test_desc_order(self):
         """ Test descending order by. """
 
