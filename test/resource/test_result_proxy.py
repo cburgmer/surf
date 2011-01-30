@@ -95,6 +95,14 @@ class TestResultProxy(unittest.TestCase):
         self.store.expect_args({"limit" : 10, "offset" : 5})
         list(self.proxy[5:15])
 
+    def test_reslicing(self):
+        """ Test slicing multiple times. """
+
+        self.store.expect_args({"limit" : 3, "offset" : 7})
+        q = self.proxy[5:10]
+        q = q[2:6]
+        list(q)
+
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testName']
     unittest.main()

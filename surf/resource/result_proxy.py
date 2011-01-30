@@ -85,6 +85,9 @@ class ResultProxy(object):
 
     def limit(self, value):
         """ Set the limit for returned result count. """
+        if "high" in self.__params or "low" in self.__params:
+            raise ValueError(
+                    "Cannot combine slicing with limit & offset")
 
         params = self.__params.copy()
         params["limit"] = value
@@ -92,6 +95,9 @@ class ResultProxy(object):
 
     def offset(self, value):
         """ Set the limit for returned results. """
+        if "high" in self.__params or "low" in self.__params:
+            raise ValueError(
+                    "Cannot combine slicing with limit & offset")
 
         params = self.__params.copy()
         params["offset"] = value
@@ -248,6 +254,12 @@ class ResultProxy(object):
         if self.__get_by_response is None:
             self.__get_by_args = {}
 
+            if "high" in self.__params:
+                self.__get_by_args["limit"] = (self.__params["high"]
+                                               - self.__params.get("low", 0))
+            if "low" in self.__params:
+                self.__get_by_args["offset"] = self.__params["low"]
+
             for key in ["limit", "offset", "full", "order", "desc", "get_by",
                         "only_direct", "context", "filter"]:
                 if key in self.__params:
@@ -303,15 +315,15 @@ class ResultProxy(object):
 
         # Build new query
         if isinstance(item, slice):
-            rp = self
+            start = stop = None
             if item.start is not None:
-                rp = rp.offset(int(item.start))
+                start = int(item.start)
             if item.stop is not None:
-                if item.start is not None:
-                    limit = int(item.stop) - int(item.start)
-                else:
-                    limit = int(item.stop)
-                rp = rp.limit(limit)
+                stop = int(item.stop)
+
+            params = self.__params.copy()
+            self.__set_limits(params, start, stop)
+            rp = ResultProxy(params)
 
             if item.step is not None:
                 return list(rp)[::item.step]
@@ -319,7 +331,32 @@ class ResultProxy(object):
                 return rp
         else:
             # Raise IndexError if result list empty
-            return list(self.offset(item).limit(1))[0]
+            params = self.__params.copy()
+            self.__set_limits(params, item, item + 1)
+            return list(ResultProxy(params))[0]
+
+    @staticmethod
+    def __set_limits(params, low, high):
+        """ Adjusts offset and limit. These are applied relative to existing
+        values.
+        """
+        if "offset" in params or "limit" in params:
+            raise ValueError(
+                    "Cannot combine slicing with limit & offset")
+
+        if high is not None:
+            if "high" in params:
+                params["high"] = min(params["high"],
+                                     params.get("low", 0) + high)
+            else:
+                params["high"] = params.get("low", 0) + high
+
+        if low is not None:
+            if "high" in params:
+                params["low"] = min(params["high"],
+                                    params.get("low", 0) + low)
+            else:
+                params["low"] = params.get("low", 0) + low
 
     def first(self):
         """ Return first resource or None if there aren't any. """

@@ -571,12 +571,13 @@ class TestSparqlProtocol(TestCase):
         _, session = self._get_store_session()
 
         Person = session.get_class(surf.ns.FOAF.Person)
-        for name in ['Elizabeth', 'Ella', 'Elvis', 'Emily', 'Emma', 'Erin']:
+        names = ['Elizabeth', 'Ella', 'Elvis', 'Emily', 'Emma', 'Erin']
+        for name in names:
             p = session.get_resource("http://%s.com/me" % name.lower(), Person)
             p.foaf_name = name
             p.save()
 
-        persons = Person.all().filter(foaf_name="(%s LIKE 'E%%')")\
+        persons = Person.all().get_by(foaf_name=names)\
                               .order(surf.ns.FOAF.name)
 
         self.assertEquals(persons[3].foaf_name.first, 'Emily')
@@ -597,4 +598,11 @@ class TestSparqlProtocol(TestCase):
                            'Erin'])
 
         self.assertEquals(get_names(persons[0:4:2]), ['Elizabeth', 'Elvis'])
+
+        self.assertEquals(get_names(persons[3:][1:3]), ['Emma', 'Erin'])
+
+        self.assertEquals(get_names(persons[3:][3:10]), [])
+        # TODO broken in Virtuoso: self.assertEquals(get_names(persons[3:][3:]), [])
+
+        self.assertEquals(persons[2:][0].foaf_name.first, 'Elvis')
 
