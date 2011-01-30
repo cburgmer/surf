@@ -34,6 +34,7 @@
 from surf.exc import NoResultFound, MultipleResultsFound
 from surf.rdf import Literal, URIRef
 from surf.util import attr2rdf, value_to_rdf
+from surf.resource.util import Q, split_attribute_edges
 
 class ResultProxy(object):
     """ Interface to :meth:`surf.store.Store.get_by`.
@@ -140,7 +141,7 @@ class ResultProxy(object):
 
         params = self.__params.copy()
         if type(value) in [str, unicode]:
-            value = self.__split_attribute_edges(value)
+            value = split_attribute_edges(value)
         elif isinstance(value, URIRef):
             value = [(value, True)]
         elif type(value) != bool:
@@ -156,19 +157,7 @@ class ResultProxy(object):
         params["desc"] = True
         return ResultProxy(params)
 
-    def __split_attribute_edges(self, name):
-        """ Allow specifying indirect attributes by giving a path of properties
-        from the object up to the requested attribute """
-        edges = []
-        for edge in name.split('__'):
-            attr, direct = attr2rdf(edge)
-            if attr is None:
-                raise ValueError("Not an attribute %r" % edge)
-            edges.append((attr, direct))
-
-        return edges
-
-    def get_by(self, **kwargs):
+    def get_by(self, *args, **kwargs):
         """ Add filter conditions.
 
         Arguments are expected in form::
@@ -188,20 +177,11 @@ class ResultProxy(object):
         # Don't overwrite existing get_by parameters, just append new ones.
         # Overwriting get_by params would cause resource.some_attr.get_by()
         # to work incorrectly.
-        params.setdefault("get_by", [])
-        for name, value in kwargs.items():
-            edges = self.__split_attribute_edges(name)
+        params.setdefault("get_by", Q())
 
-            if hasattr(value, "subject"):
-                # If value has subject attribute, this must be Resource, 
-                # take its subject.
-                value = value.subject
-            elif hasattr(value, "__iter__"):
-                value = map(value_to_rdf, value)
-            else:
-                value = value_to_rdf(value)
+        params["get_by"].extend(args)
+        params["get_by"].extend(kwargs.items())
 
-            params["get_by"].append((edges, value))
         return ResultProxy(params)
 
     def filter(self, **kwargs):

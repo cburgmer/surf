@@ -591,8 +591,15 @@ class Resource(object):
 
         rdf_type = None
         # Let's see if rdf:type was specified in query parameters
-        for edges, value in params.get("get_by", []):
-            if len(edges) == 1:
+        if "get_by" in params:
+            for child in params["get_by"].children:
+                if type(child) != tuple:
+                    continue
+
+                edges, value = child
+                if len(edges) != 1:
+                    continue
+
                 predicate, _ = edges[0]
                 # if rdf:type was filtered against several values,
                 # we cannot use it for assigning type. 
@@ -639,7 +646,7 @@ class Resource(object):
         return proxy.get_by(rdf_type=cls.uri)
 
     @classmethod
-    def get_by(cls, **filters):
+    def get_by(cls, *args, **filters):
         """ Retrieve all instances that match specified filters and class.
 
         Filters are specified as keyword arguments, argument names follow SuRF
@@ -663,7 +670,7 @@ class Resource(object):
         proxy = ResultProxy(store=store,
                             instancemaker=cls.__instancemaker)
 
-        return proxy.get_by(**filters)
+        return proxy.get_by(*args, **filters)
 
     def query_attribute(self, attribute_name):
         """ Return ResultProxy for querying attribute values. """
