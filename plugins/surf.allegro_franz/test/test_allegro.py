@@ -149,3 +149,29 @@ class TestAllegro(TestCase):
         self.assertEquals(len(persons), 1)
         # Unbound results sort earliest
         self.assertEquals(persons[0].subject, URIRef("http://A0"))
+
+    def test_save_context(self):
+        """ Test saving resource with specified context. """
+        # Copied from surf.sparql_protocol/test/test_sparql_protocol.py
+
+        session = self.rdf_session
+        Person = session.get_class(surf.ns.FOAF + "Person")
+        context = URIRef("http://my_context_1")
+
+        jane = session.get_resource("http://jane", Person, context = context)
+        jane.foaf_name = "Jane"
+        jane.save()
+
+        # Same context.
+        jane2 = session.get_resource("http://jane", Person, context = context)
+        jane2.load()
+        self.assertEqual(jane2.foaf_name.one, "Jane")
+        self.assertEqual(jane2.context, context)
+
+        # Different context.
+        other_context = URIRef("http://other_context_1")
+        jane3 = session.get_resource("http://jane", Person,
+                                     context = other_context)
+
+        self.assertEqual(jane3.is_present(), False)
+
