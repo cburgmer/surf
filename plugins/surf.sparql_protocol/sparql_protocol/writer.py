@@ -58,7 +58,7 @@ class WriterPlugin(RDFWriter):
         self.__combine_queries = kwargs.get("combine_queries")
         self.__results_format = JSON
 
-        print "endpoint: %s" % self.__endpoint
+        self.log.debug("endpoint: %s" % self.__endpoint)
         self.__sparql_wrapper = SPARQLWrapper(self.__endpoint, self.__results_format)
         self.__sparql_wrapper.setMethod("POST")
 
