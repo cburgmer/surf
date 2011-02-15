@@ -1,10 +1,25 @@
 """ Module for rdflib plugin tests. """
 
+import os
 from unittest import TestCase
+import random
 
 import surf
 from surf.rdf import Literal, URIRef
 from surf.util import value_to_rdf
+
+SERVER_ENV = 'SURF_ALLEGRO_SERVER_TEST'
+SERVER = (os.environ[SERVER_ENV] if (SERVER_ENV in os.environ
+                                     and os.environ[SERVER_ENV].strip())
+                                 else "localhost")
+PORT_ENV = 'SURF_ALLEGRO_PORT_TEST'
+PORT = (int(os.environ[PORT_ENV]) if (PORT_ENV in os.environ
+                                  and os.environ[PORT_ENV].strip())
+                                  else 6789)
+CATALOG_ENV = 'SURF_ALLEGRO_CATALOG_TEST'
+CATALOG = (os.environ[CATALOG_ENV] if (CATALOG_ENV in os.environ
+                                       and os.environ[CATALOG_ENV].strip())
+                                   else "repositories")
 
 class TestAllegro(TestCase):
     """ Tests for sparql_protocol plugin. """
@@ -12,11 +27,10 @@ class TestAllegro(TestCase):
     def setUp(self):
         rdf_store = surf.Store(reader = "allegro_franz",
                                writer = "allegro_franz",
-                               server = "localhost",
-                               port = 6789,
-                               catalog = "repositories",
+                               server = SERVER,
+                               port = PORT,
+                               catalog = CATALOG,
                                repository = "test_surf")
-
         self.rdf_session = surf.Session(rdf_store)
         self.Logic = self.rdf_session.get_class(surf.ns.SURF.Logic)
 
@@ -96,3 +110,68 @@ class TestAllegro(TestCase):
 
         jane = session.get_resource("http://Jane", Person)
         self.assertEquals(len(jane.foaf_knows), 0)        
+
+    def test_contains(self):
+        session = self.rdf_session
+        Person = session.get_class(surf.ns.FOAF + "Person")
+
+        john = session.get_resource("http://John", Person)
+        john.foaf_name = "John"
+        john.update()
+
+        persons = Person.get_by(foaf_name="John")
+        self.assert_(any("John" in p.foaf_name for p in persons),
+                     '"John" not found in foaf_name')
+
+    def test_attr_order_by(self):
+        """ Test ordering of attribute value. """
+
+        session = self.rdf_session
+        Person = session.get_class(surf.ns.FOAF + "Person")
+
+        # First remove any previously created
+        for p in Person.all(): p.remove()
+
+        for i in range(0, 10):
+            person = session.get_resource("http://A%d" % i, Person)
+            person.foaf_name = "A%d" % i
+            person.save()
+
+        all_persons = list(Person.all())
+        random.shuffle(all_persons)
+
+        person = person = session.get_resource("http://A0", Person)
+        person.foaf_knows = all_persons
+        person.foaf_name = []
+        person.update()
+
+        persons = list(person.foaf_knows.order(surf.ns.FOAF["name"]).limit(1))
+        self.assertEquals(len(persons), 1)
+        # Unbound results sort earliest
+        self.assertEquals(persons[0].subject, URIRef("http://A0"))
+
+    def test_save_context(self):
+        """ Test saving resource with specified context. """
+        # Copied from surf.sparql_protocol/test/test_sparql_protocol.py
+
+        session = self.rdf_session
+        Person = session.get_class(surf.ns.FOAF + "Person")
+        context = URIRef("http://my_context_1")
+
+        jane = session.get_resource("http://jane", Person, context = context)
+        jane.foaf_name = "Jane"
+        jane.save()
+
+        # Same context.
+        jane2 = session.get_resource("http://jane", Person, context = context)
+        jane2.load()
+        self.assertEqual(jane2.foaf_name.one, "Jane")
+        self.assertEqual(jane2.context, context)
+
+        # Different context.
+        other_context = URIRef("http://other_context_1")
+        jane3 = session.get_resource("http://jane", Person,
+                                     context = other_context)
+
+        self.assertEqual(jane3.is_present(), False)
+

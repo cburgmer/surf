@@ -50,7 +50,7 @@ class Plugin(object):
         self.log.setLevel(logging.NOTSET)
         self.__inference = False
 
-    def enable_logging(self, enable = True):
+    def enable_logging(self, enable=True):
         """ Enables or disable `logging` for the current `plugin`. """
 
         level = enable and logging.DEBUG or logging.NOTSET
@@ -75,10 +75,10 @@ class Plugin(object):
 
         if not isinstance(val, bool):
             val = False
-        
+
         self.__inference = val
 
-    inference = property(fget = lambda self:self.__inference,
-                         fset = __set_inference)
+    inference = property(fget=lambda self:self.__inference,
+                         fset=__set_inference)
     """ Toggle `logical inference` on / off. The property has any effect
     only if such functionality is supported by the underlying data `store`. """

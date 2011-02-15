@@ -71,8 +71,8 @@ class Session(object):
 
     # TODO: add cache
 
-    def __init__(self, default_store = None, mapping = {},
-                 auto_persist = False, auto_load = False):
+    def __init__(self, default_store=None, mapping={},
+                 auto_persist=False, auto_load=False):
         """ Create a new `session` object that handles the creation of types
         and instances, also the session binds itself to the `Resource` objects
         to allow the Resources to access the data `store` and perform
@@ -143,11 +143,11 @@ class Session(object):
 
         if not isinstance(val, bool):
             val = False
-            
+
         self.__auto_persist = val
 
-    auto_persist = property(fget = lambda self: self.__auto_persist,
-                            fset = set_auto_persist)
+    auto_persist = property(fget=lambda self: self.__auto_persist,
+                            fset=set_auto_persist)
     """ Toggle `auto_persistence` (no need to explicitly call `commit`,
     `resources` are persisted to the `store` each time a modification occurs)
     on or off. Accepts boolean values. """
@@ -164,8 +164,8 @@ class Session(object):
 
         self.__auto_load = val
 
-    auto_load = property(fget = lambda self: self.__auto_load,
-                         fset = set_auto_load)
+    auto_load = property(fget=lambda self: self.__auto_load,
+                         fset=set_auto_load)
     """Toggle `auto_load` (no need to explicitly call `load`, `resources` are
     loaded from the `store` automatically on creation) on or off.
     Accepts boolean values. """
@@ -193,8 +193,8 @@ class Session(object):
         for store in self.__stores:
             self.__stores[store].enable_logging(enable)
 
-    enable_logging = property(fget = get_enable_logging,
-                              fset = set_enable_logging)
+    enable_logging = property(fget=get_enable_logging,
+                              fset=set_enable_logging)
     """ Toggle `logging` on or off. Accepts boolean values. """
 
     # TODO: add caching ... need strategies
@@ -224,7 +224,7 @@ class Session(object):
             return self.__stores.keys()[0]
         return None
 
-    default_store_key = property(fget = get_default_store_key)
+    default_store_key = property(fget=get_default_store_key)
     """ The `default store key` of the session.
 
     If it is set explicitly on `session` creation it is returned,
@@ -253,8 +253,8 @@ class Session(object):
             return self.__stores[ds_key]
         return None
 
-    default_store = property(fget = get_default_store,
-                              fset = set_default_store)
+    default_store = property(fget=get_default_store,
+                              fset=set_default_store)
     """ The `default store` of the session.
 
     See `default_store_key` to see how the `default store` is selected. """
@@ -290,7 +290,7 @@ class Session(object):
 
         self.mapping = None
 
-    def map_type(self, uri, store = None, *classes):
+    def map_type(self, uri, store=None, *classes):
         """ Create and return a `class` based on the `uri` given.
 
         Also will add the `classes` to the inheritance list.
@@ -314,11 +314,11 @@ class Session(object):
             session_classes = [session_classes]
         base_classes.extend(session_classes)
         return new.classobj(str(name), tuple(base_classes),
-                            {'uri' : uri, 
+                            {'uri' : uri,
                              'store_key' : store,
                              'session' : self})
 
-    def get_class(self, uri, store = None, context = None, *classes):
+    def get_class(self, uri, store=None, context=None, *classes):
         """
         See :func:`surf.session.Session.map_type`.
         The `uri` parameter can be any of the following:
@@ -334,8 +334,8 @@ class Session(object):
 
         return self.map_type(uri, store, *classes)
 
-    def map_instance(self, concept, subject, store = None, classes = [],
-                     block_auto_load = False, context = None):
+    def map_instance(self, concept, subject, store=None, classes=[],
+                     block_auto_load=False, context=None):
         """Create a `instance` of the `class` specified by `uri` and `classes`
         to be inherited, see `map_type` for more information. """
 
@@ -347,12 +347,12 @@ class Session(object):
 
         if not (isinstance(concept, type) and issubclass(concept, Resource)):
             concept = self.map_type(concept, store, *classes)
-            
-        return concept(subject, block_auto_load = block_auto_load,
-                       context = context)
 
-    def get_resource(self, subject, uri = None, store = None, graph = None,
-                     block_auto_load = False, context = None, *classes):
+        return concept(subject, block_auto_load=block_auto_load,
+                       context=context)
+
+    def get_resource(self, subject, uri=None, store=None, graph=None,
+                     block_auto_load=False, context=None, *classes):
         """ Same as `map_type` but `set` the resource from the `graph`. """
 
         if not isinstance(subject, URIRef):
@@ -362,16 +362,16 @@ class Session(object):
             uri = Resource.concept(subject)
 
         resource = self.map_instance(uri, subject, store, classes,
-                                     block_auto_load = block_auto_load,
-                                     context = context)
+                                     block_auto_load=block_auto_load,
+                                     context=context)
 
         if graph:
             resource.set(graph)
 
         return resource
 
-    def load_resource(self, uri, subject, store = None, data = None,
-                      file = None, location = None, format = None, *classes):
+    def load_resource(self, uri, subject, store=None, data=None,
+                      file=None, location=None, format=None, *classes):
         """ Create a `instance` of the `class` specified by `uri`.
 
         Also set the internal properties according to the ones by the specified
@@ -380,8 +380,8 @@ class Session(object):
         """
 
         resource = self.map_type(uri, store, *classes)(subject)
-        resource.load_from_source(data = data, file = file,
-                                  location = location, format = format)
+        resource.load_from_source(data=data, file=file,
+                                  location=location, format=format)
         return resource
 
     def commit(self):

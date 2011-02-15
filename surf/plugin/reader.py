@@ -68,7 +68,7 @@ class RDFReader(Plugin):
 
         return False
 
-    def _concept(self,subject):
+    def _concept(self, subject):
         """ To be implemented by classes that inherit `RDFReader`.
 
         This method is called directly by :meth:`concept`.

@@ -173,7 +173,7 @@ def uri_to_class(uri):
     '''
     return new.classobj(str(uri_to_classname(uri)), (), {'uri':uri})
 
-def uuid_subject(namespace = None):
+def uuid_subject(namespace=None):
     '''the function generates a unique subject in the provided `namespace` based on
     the :meth:`uuid.uuid4()` method,
     If `namespace` is not specified than the default `SURF` namespace is used
@@ -197,7 +197,7 @@ DE_CAMEL_CASE_DEFAULT = 2 ** 0
 DE_CAMEL_CASE_FORCE_LOWER_CASE = 2 ** 1
 pattern = re.compile('([A-Z][A-Z][a-z])|([a-z][A-Z])')
 
-def de_camel_case(camel_case, delim = ' ', method = DE_CAMEL_CASE_FORCE_LOWER_CASE):
+def de_camel_case(camel_case, delim=' ', method=DE_CAMEL_CASE_FORCE_LOWER_CASE):
     '''Adds spaces to a camel case string.  Failure to space out string returns the original string.'''
     if camel_case is None:
         return None
@@ -238,13 +238,13 @@ def value_to_rdf(value):
     elif type(value) in [list, tuple]:
         language = len(value) > 1 and value[1] or None
         datatype = len(value) > 2 and value[2] or None
-        return Literal(value[0], lang = language, datatype = datatype)
+        return Literal(value[0], lang=language, datatype=datatype)
     elif type(value) is dict:
         val = value.get("value")
         language = value.get("language")
         datatype = value.get("datatype")
         if val:
-            return Literal(val, lang = language, datatype = datatype)
+            return Literal(val, lang=language, datatype=datatype)
         return value
     return value
 
@@ -256,7 +256,7 @@ class single(object):
             attr = rdf2attr(attr, True)
         self.attr = attr
 
-    def __get__(self, obj, type = None):
+    def __get__(self, obj, type=None):
         return getattr(obj, self.attr).first
 
     def __set__(self, obj, value):
