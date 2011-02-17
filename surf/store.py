@@ -132,12 +132,12 @@ class Store(object):
             self.reader.close()
             self.log('reader closed successfully')
         except Exception, e:
-            self.log('error on closing the reader ' + unicode(e))
+            self.log('error on closing the reader ' + str(e))
         try:
             self.writer.close()
             self.log('writer closed successfully')
         except Exception, e:
-            self.log('error on closing the writer ' + unicode(e))
+            self.log('error on closing the writer ' + str(e))
 
     #---------------------------------------------------------------------------
     # the reader interface
@@ -261,8 +261,7 @@ class Store(object):
 
         return self.writer.index_triples(**kwargs)
 
-    def load_triples(self, context=None, **kwargs):
+    def load_triples(self, **kwargs):
         """ See :func:`surf.plugin.writer.RDFWriter.load_triples` method. """
 
-        context = self.__add_default_context(context)
-        return self.writer.load_triples(context=context, **kwargs)
+        return self.writer.load_triples(**kwargs)

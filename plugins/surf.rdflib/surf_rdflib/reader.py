@@ -57,7 +57,7 @@ class ReaderPlugin(RDFQueryReader):
         property(lambda self: self.__commit_pending_transaction_on_close)
 
     def _to_table(self, result):
-        vars = [unicode(var) for var in result.selectionF]
+        vars = [str(var) for var in result.selectionF]
         def row_to_dict(row):
             return dict([ (vars[i], row[i]) for i in range(len(row)) ])
         return [ row_to_dict(row) for row in result ]

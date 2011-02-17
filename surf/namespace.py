@@ -105,8 +105,8 @@ __fallback_namespace = SURF
 __inverted_dict__ = {}
 for k, v in sys.modules[__name__].__dict__.items():
     if isinstance(v, Namespace) or isinstance(v, ClosedNamespace):
-        __inverted_dict__[unicode(v)] = k
-
+        __inverted_dict__[str(v)] = k
+        
 __direct_dict__ = {}
 for k, v in sys.modules[__name__].__dict__.items():
     if isinstance(v, Namespace) or isinstance(v, ClosedNamespace):
@@ -114,8 +114,8 @@ for k, v in sys.modules[__name__].__dict__.items():
 
 def __add_inverted(prefix):
     ns_dict = sys.modules[__name__].__dict__
-    __inverted_dict__[unicode(ns_dict[prefix])] = prefix
-
+    __inverted_dict__[str(ns_dict[prefix])] = prefix
+    
 def __add_direct(prefix):
     ns_dict = sys.modules[__name__].__dict__
     __direct_dict__[prefix] = ns_dict[prefix]

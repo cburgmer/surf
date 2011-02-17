@@ -42,7 +42,7 @@ from reader import ReaderPlugin
 from surf.plugin.writer import RDFWriter
 from surf.query import Filter, Group, NamedGroup, Union
 from surf.query.update import insert, delete, clear
-from surf.rdf import BNode, Literal, URIRef, Graph
+from surf.rdf import BNode, Literal, URIRef
 
 class SparqlWriterException(Exception): pass
 
@@ -252,11 +252,11 @@ class WriterPlugin(RDFWriter):
             self.__sparql_wrapper.query().convert()
             return True
         except EndPointNotFound, notfound:
-            self.log.error('SPARQL ENDPOINT not found : \n' + unicode(notfound))
+            self.log.error('SPARQL ENDPOINT not found : \n' + str(notfound))
         except QueryBadFormed, badquery:
-            self.log.error('SPARQL EXCEPTION ON QUERY (BAD FORMAT): \n ' + unicode(badquery))
+            self.log.error('SPARQL EXCEPTION ON QUERY (BAD FORMAT): \n ' + str(badquery))
         except SPARQLWrapperException, sparqlwrapper:
-            self.log.error('SPARQL WRAPPER Exception \n' + unicode(sparqlwrapper))
+            self.log.error('SPARQL WRAPPER Exception \n' + str(sparqlwrapper))
 
         return None
 
@@ -277,19 +277,6 @@ class WriterPlugin(RDFWriter):
 
         # SPARQL/Update doesn't have standard way to force reindex. 
         return False
-
-    def load_triples(self,source, format = 'xml', context = None, **kwargs):
-        """ Load `triples` from supported `sources` if such functionality is
-        present.
-
-        Return `True` if operation successful.
-
-        """
-        g = Graph()
-        g.parse(source=source, format=format)
-        self.__add_many(g, context=context)
-
-        return True
 
     def _clear(self, context = None):
         """ Clear the triple-store. """

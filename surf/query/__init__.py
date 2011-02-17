@@ -183,9 +183,6 @@ class Query(object):
 
         """
 
-        if len(uris) == 1 and type(uris[0]) is list:
-            uris = uris[0]
-
         for uri in uris:
             if uri is None:
                 raise ValueError("Invalid graph URI")

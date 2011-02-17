@@ -32,8 +32,8 @@ print 'All covers'
 for a in all_albums:
     if a.dbpedia_name:
         cvr = a.dbpedia_cover
-        print '\tCover %s for "%s"' % (unicode(a.dbpedia_cover), 
-                                       unicode(a.dbpedia_name))
+        print '\tCover %s for "%s"' % (str(a.dbpedia_cover), 
+                                       str(a.dbpedia_name))
 
 print '------------------------------------------------------------------------'
 print 'LOCAL'

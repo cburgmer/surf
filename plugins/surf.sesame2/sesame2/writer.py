@@ -61,14 +61,14 @@ class WriterPlugin(RDFWriter):
             self.__repository = kwargs['repository'] if 'repository' in kwargs else None
             self.__use_allegro_extensions = kwargs['use_allegro_extensions'] if 'use_allegro_extensions' in kwargs else False
 
-            self.log.info('INIT : ' + unicode(self.server) + ',' + unicode(self.port) + ',' + unicode(self.root_path) + ',' + unicode(self.repository_path))
+            self.log.info('INIT : ' + str(self.server) + ',' + str(self.port) + ',' + str(self.root_path) + ',' + str(self.repository_path))
 
             if not self.repository:
                 raise Exception('No <repository> argument supplyed.')
 
             if self.__use_allegro_extensions:
                 opened = self.get_allegro().open_repository(self.repository)
-                self.log.info('ALLEGRO repository opened: ' + unicode(opened))
+                self.log.info('ALLEGRO repository opened: ' + str(opened))
 
     server = property(lambda self: self.__server)
     port = property(lambda self: self.__port)

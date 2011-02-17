@@ -155,6 +155,7 @@ class WriterPlugin(RDFWriter):
         server_side = kwargs['server_side'] if 'server_side' in kwargs else True
         if source:
             self.__con.addFile(source, base = base, format = format, context = toSesame(context, self.__f), serverSide = server_side)
+
             return True
         return False
 

@@ -19,16 +19,16 @@ ENDPOINT = (os.environ[ENV] if ENV in os.environ and os.environ[ENV].strip()
 class TestSparqlProtocol(TestCase):
     """ Tests for sparql_protocol plugin. """
 
-    def test_to_table(self):
-        """ Test _to_table with empty bindings.  """
+    def test_to_rdflib(self):
+        """ Test _toRdflib with empty bindings.  """
 
         data = {'results' : {'bindings' : [{'c' : {}}]}}
 
         # This should not raise exception.
-        store = surf.store.Store(reader="sparql_protocol")
-        store.reader._to_table(data)
+        store = surf.store.Store(reader = "sparql_protocol")
+        store.reader._toRdflib(data)
 
-    def _get_store_session(self, use_default_context=True):
+    def _get_store_session(self, use_default_context = True):
         """ Return initialized SuRF store and session objects. """
 
         # FIXME: take endpoint from configuration file,
@@ -38,10 +38,10 @@ class TestSparqlProtocol(TestCase):
                   "endpoint" : ENDPOINT,
                   "use_subqueries" : True,
                   "combine_queries" : True}
-
+        
         if use_default_context:
-            kwargs["default_context"] = "http://surf_test_graph/dummy2"
-
+            kwargs["default_context"] ="http://surf_test_graph/dummy2" 
+        
         store = surf.Store(**kwargs)
         session = surf.Session(store)
 
@@ -74,11 +74,11 @@ class TestSparqlProtocol(TestCase):
         """ Test that removing without context works.  """
 
         # Not specifying default graph here!
-        _, session = self._get_store_session(use_default_context=False)
+        _, session = self._get_store_session(use_default_context = False)
         Person = session.get_class(surf.ns.FOAF + "Person")
         john = session.get_resource("http://Nonexistent-John", Person)
         john.remove()
-
+        
     def test_save_multiple(self):
         """ Test that saving multiple resources work.  """
 
@@ -119,12 +119,12 @@ class TestSparqlProtocol(TestCase):
         Person = session.get_class(surf.ns.FOAF + "Person")
         context = URIRef("http://my_context_1")
 
-        jane = session.get_resource("http://jane", Person, context=context)
+        jane = session.get_resource("http://jane", Person, context = context)
         jane.foaf_name = "Jane"
         jane.save()
 
         # Same context.
-        jane2 = session.get_resource("http://jane", Person, context=context)
+        jane2 = session.get_resource("http://jane", Person, context = context)
         jane2.load()
         self.assertEqual(jane2.foaf_name.one, "Jane")
         self.assertEqual(jane2.context, context)
@@ -132,7 +132,7 @@ class TestSparqlProtocol(TestCase):
         # Different context.
         other_context = URIRef("http://other_context_1")
         jane3 = session.get_resource("http://jane", Person,
-                                     context=other_context)
+                                     context = other_context)
 
         self.assertEqual(jane3.is_present(), False)
 
@@ -144,17 +144,17 @@ class TestSparqlProtocol(TestCase):
         context = URIRef("http://my_context_1")
         store.clear(context)
 
-        jane = session.get_resource("http://jane", Person, context=context)
+        jane = session.get_resource("http://jane", Person, context = context)
         jane.foaf_name = "Jane"
         jane.save()
 
         persons = list(Person.all().context(context))
         self.assertEquals(len(persons), 1)
 
-        persons = Person.get_by(foaf_name=Literal("Jane")).context(context)
+        persons = Person.get_by(foaf_name = Literal("Jane")).context(context)
         self.assertEquals(len(list(persons)), 1)
 
-        persons = Person.get_by_attribute(["foaf_name"], context=context)
+        persons = Person.get_by_attribute(["foaf_name"], context = context)
         self.assertEquals(len(persons), 1)
 
     def test_get_by(self):
@@ -167,7 +167,7 @@ class TestSparqlProtocol(TestCase):
         jay.foaf_name = "Jay"
         jay.save()
 
-        persons = Person.all().get_by(foaf_name=Literal("Jay"))
+        persons = Person.all().get_by(foaf_name = Literal("Jay"))
         persons = list(persons)
         self.assertTrue(persons[0].foaf_name.first, "Jay")
 
@@ -237,7 +237,7 @@ class TestSparqlProtocol(TestCase):
         _, session = self._get_store_session()
         Person = session.get_class(surf.ns.FOAF + "Person")
 
-        persons = Person.all().get_by(foaf_name=["John", "Mary"])
+        persons = Person.all().get_by(foaf_name = ["John", "Mary"])
         self.assertEquals(len(persons), 2)
 
     def test_full(self):
@@ -251,13 +251,13 @@ class TestSparqlProtocol(TestCase):
         jane.foaf_knows = URIRef("http://Mary")
         jane.save()
 
-        persons = Person.all().get_by(foaf_name=Literal("Mary")).full()
+        persons = Person.all().get_by(foaf_name = Literal("Mary")).full()
         persons = list(persons)
         self.assertTrue(len(persons[0].rdf_direct) > 1)
         self.assertTrue(len(persons[0].rdf_inverse) > 0)
 
         # Now, only direct
-        persons = Person.all().get_by(foaf_name=Literal("Mary")).full(only_direct=True)
+        persons = Person.all().get_by(foaf_name = Literal("Mary")).full(only_direct = True)
         persons = list(persons)
         self.assertTrue(len(persons[0].rdf_direct) > 1)
         self.assertTrue(len(persons[0].rdf_inverse) == 0)
@@ -425,7 +425,7 @@ class TestSparqlProtocol(TestCase):
         john.foaf_knows = mary
         john.save()
 
-        self.assertEquals(len(john.foaf_knows.get_by(foaf_name="Jane")), 0)
+        self.assertEquals(len(john.foaf_knows.get_by(foaf_name = "Jane")), 0)
 
     def test_class_all(self):
         """ Test Class.all().full(). 
@@ -461,15 +461,15 @@ class TestSparqlProtocol(TestCase):
         Person = session.get_class(surf.ns.FOAF["Person"])
 
         # Select persons which have names starting with "J"
-        js = Person.all().filter(foaf_name="(%s LIKE 'J%%')")
+        js = Person.all().filter(foaf_name = "(%s LIKE 'J%%')")
         self.assertEqual(len(js), 2)
 
     def test_exceptions(self):
         """ Test that exceptions are raised on invalid queries. """
 
-        store = surf.Store(reader="sparql_protocol",
-                           writer="sparql_protocol",
-                           endpoint="invalid")
+        store = surf.Store(reader = "sparql_protocol",
+                           writer = "sparql_protocol",
+                           endpoint = "invalid")
 
         def try_query():
             store.execute(query)
@@ -526,7 +526,7 @@ class TestSparqlProtocol(TestCase):
         jane.update()
 
         # This should also remove <jane> foaf:knows <mary>.
-        mary.remove(inverse=True)
+        mary.remove(inverse = True)
 
         jane = session.get_resource("http://Jane", Person)
         self.assertEquals(len(jane.foaf_knows), 0)
@@ -553,10 +553,10 @@ class TestSparqlProtocol(TestCase):
 
     def test_constructor_default_context(self):
         """ Test that Person(uri) sets default context. """
-
+        
         _, session = self._get_store_session()
         Person = session.get_class(surf.ns.FOAF.Person)
-
+        
         p = Person()
         self.assertTrue(p.context, "Default context not set")
 
