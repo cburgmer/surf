@@ -42,25 +42,35 @@ from surf.resource.util import Q
 from surf.rdf import URIRef
 
 def query_SP(s, p, direct, context):
-    """ Construct :class:`surf.query.Query` with `?v` and `?c` as unknowns. """
+    """ Construct :class:`surf.query.Query` with `?v` and `?g`, `?c` as
+    unknowns. """
 
     s, v = direct and (s, '?v') or ('?v', s)
-    query = select('?v', '?c').distinct()
-    query.where((s, p, v)).optional_group(('?v', a, '?c'))
+    query = select('?v', '?c', '?g').distinct()
+    query.where((s, p, v)).optional_group(('?v', a, '?c'))\
+                          .optional_group(named_group('?g', ('?v', a, '?c')))
     if context:
         query.from_(context)
+        query.from_named(context)
 
     return query
 
 def query_S(s, direct, context):
-    """ Construct :class:`surf.query.Query` with `?p`, `?v` and `?c` as
+    """ Construct :class:`surf.query.Query` with `?p`, `?v` and `?g`, `?c` as
     unknowns. """
 
     s, v = direct and (s, '?v') or ('?v', s)
-    query = select('?p', '?v', '?c').distinct()
-    query.where((s, '?p', v)).optional_group(('?v', a, '?c'))
+    query = select('?p', '?v', '?c', '?g').distinct()
+    # Get predicate, objects and optionally rdf:type & named graph of
+    # subject rdf:type and object rdf:type
+    # TODO fails under Virtuoso as V. doesn't allow ?g to be bound to two
+    # optional matches
+    query.where((s, '?p', v)).optional_group(('?v', a, '?c'))\
+                             .optional_group(named_group('?g', (s, a, v)))\
+                             .optional_group(named_group('?g', ('?v', a, '?c')))
     if context:
         query.from_(context)
+        query.from_named(context)
 
     return query
 
@@ -78,11 +88,13 @@ def query_Ask(subject, context):
 
 #Resource class level
 def query_P_S(c, p, direct, context):
-    """ Construct :class:`surf.query.Query` with `?s` and `?c` as unknowns. """
+    """ Construct :class:`surf.query.Query` with `?s` and `?g`, `?c` as
+    unknowns. """
 
-    query = select('?s', '?c').distinct()
+    query = select('?s', '?c', '?g').distinct()
     if context:
         query.from_(context)
+        query.from_named(context)
 
     for i in range(len(p)):
         s, v = direct and  ('?s', '?v%d' % i) or ('?v%d' % i, '?s')
@@ -90,6 +102,7 @@ def query_P_S(c, p, direct, context):
             query.where((s, p[i], v))
 
     query.optional_group(('?s', a, '?c'))
+    query.optional_group(named_group('?g', ('?s', a, '?c')))
 
     return query
 
@@ -113,12 +126,12 @@ class RDFQueryReader(RDFReader):
     def _get(self, subject, attribute, direct, context):
         query = query_SP(subject, attribute, direct, context)
         result = self._execute(query)
-        return self.convert(result, 'v', 'c')
+        return self.convert(result, 'v', 'g', 'c')
 
     def _load(self, subject, direct, context):
         query = query_S(subject, direct, context)
         result = self._execute(query)
-        return self.convert(result, 'p', 'v', 'c')
+        return self.convert(result, 'p', 'v', 'g', 'c')
 
     def _is_present(self, subject, context):
         query = query_Ask(subject, context)
@@ -133,7 +146,7 @@ class RDFQueryReader(RDFReader):
     def _instances_by_attribute(self, concept, attributes, direct, context):
         query = query_P_S(concept, attributes, direct, context)
         result = self._execute(query)
-        return self.convert(result, 's', 'c')
+        return self.convert(result, 's', 'g', 'c')
 
     @classmethod
     def __edge_iterator(cls, edge='e'):
@@ -277,13 +290,16 @@ class RDFQueryReader(RDFReader):
                 return self.__get_by_n_queries(params)
 
         # No details, just subjects and classes
-        query = select("?s", "?c")
+        query = select("?s", "?c", "?g")
         self.__apply_limit_offset_order_get_by_filter(params, query)
         query.optional_group(("?s", a, "?c"))
+        # Query for the same tuple to get the named graph if obtainable
+        query.optional_group(named_group("?g", ("?s", a, "?c")))
 
         context = params.get("context", None)
-        if not (context is None):
+        if context is not None:
             query.from_(context)
+            query.from_named(context)
 
         # Load just subjects and their types
         table = self._to_table(self._execute(query))
@@ -299,9 +315,13 @@ class RDFQueryReader(RDFReader):
                 subjects[subject] = instance_data
                 results.append((subject, instance_data))
 
+            # "context" comes from an optional group and is missing if the
+            # triple is stored in the unamed graph
+            context = match.get("g")
+
             if "c" in match:
                 concept = match["c"]
-                subjects[subject]["direct"][a][concept] = []
+                subjects[subject]["direct"][a][concept] = {context: []}
 
         return results
 
@@ -309,8 +329,9 @@ class RDFQueryReader(RDFReader):
         context = params.get("context", None)
 
         query = select("?s")
-        if not (context is None):
+        if context is not None:
             query.from_(context)
+            query.from_named(context)
 
         self.__apply_limit_offset_order_get_by_filter(params, query)
 
@@ -322,12 +343,12 @@ class RDFQueryReader(RDFReader):
             instance_data = {}
 
             result = self._execute(query_S(subject, True, context))
-            result = self.convert(result, 'p', 'v', 'c')
+            result = self.convert(result, 'p', 'v', 'g', 'c')
             instance_data["direct"] = result
 
             if not params.get("only_direct"):
                 result = self._execute(query_S(subject, False, context))
-                result = self.convert(result, 'p', 'v', 'c')
+                result = self.convert(result, 'p', 'v', 'g', 'c')
                 instance_data["inverse"] = result
 
             results.append((subject, instance_data))
@@ -345,11 +366,18 @@ class RDFQueryReader(RDFReader):
             del params["order"]
         self.__apply_limit_offset_order_get_by_filter(inner_params, inner_query)
 
-        query = select("?s", "?p", "?v", "?c").distinct()
-        query.group(('?s', '?p', '?v'), optional_group(('?v', a, '?c')))
+
+        query = select("?s", "?p", "?v", "?c", "?g").distinct()
+        # Get values with object type & context
+        # TODO we need to query both contexts, from ?s -> rdf_type & ?v -> rdf_type but Virtuoso does not bind ?g twice. Bug or feature?
+        query.group(('?s', '?p', '?v'),
+                    optional_group(('?v', a, '?c')),
+                    optional_group(named_group("?g", ("?s", a, "?v"))))
+                    #optional_group(named_group("?g", ("?v", a, "?c"))))
         query.where(inner_query)
-        if not (context is None):
+        if context is not None:
             query.from_(context)
+            query.from_named(context)
 
         # Need ordering in outer query
         if "order" in params:
@@ -383,14 +411,18 @@ class RDFQueryReader(RDFReader):
             if not predicate in direct_attributes:
                 direct_attributes[predicate] = {}
 
+            # "context" comes from an optional group and is missing if the
+            # triple is stored in the unamed graph
+            context = match.get("g")
+
             # Add value to subject->predicate if ...
             predicate_values = direct_attributes[predicate]
             if not value in predicate_values:
-                predicate_values[value] = []
+                predicate_values[value] = {context: []}
 
             # Add RDF type of the value to subject->predicate->value list
             if "c" in match:
-                predicate_values[value].append(match["c"])
+                predicate_values[value][context].append(match["c"])
 
         return results
 
@@ -425,9 +457,7 @@ class RDFQueryReader(RDFReader):
             data = results
             for i in range(len(keys) - 1):
                 k = keys[i]
-                if k not in row:
-                    continue
-                v = row[k]
+                v = row.get(k)
                 if i < last:
                     if v not in data:
                         data[v] = {}

@@ -311,7 +311,7 @@ class Resource(object):
     def _lazy(cls, value):
         """
         Do `lazy` instantiation of rdf predicates
-        value is a dictionary {val:[concept,concept,...]},
+        value is a dictionary {val:{context:[concept,concept,...],...}},
         returns a instance of `Resource`.
 
         """
@@ -322,7 +322,15 @@ class Resource(object):
             if isinstance(value[r], Resource) :
                 inst = value[r]
             elif type(r) in [URIRef, BNode]:
-                inst = cls._instance(r, value[r])
+                contexts, concepts_lists  = zip(*value[r].items()) or ([], [])
+                # Flatten concepts lists
+                concepts = [concept for c in concepts_lists for concept in c]
+                # Use context of first concept as type
+                context = contexts and contexts[0] or None
+
+                # TODO r can be both a "literal" value (as from {?s rdf:type r}
+                # or an "object" value (as from {?s ?p r . r rdf:type value[r]})
+                inst = cls._instance(r, concepts, context=context)
             attr_value.append(inst)
         return attr_value
 
@@ -534,7 +542,7 @@ class Resource(object):
     def __set_predicate_values(self, results, direct):
         """ set the prediate - value(s) to the resource using lazy loading,
         `results` is a dict under the form:
-        {'predicate':{'value':[concept,concept],...},...}.
+        {'predicate':{'value':{'context':[concept,concept],...},...},...}.
 
         """
 
@@ -620,7 +628,9 @@ class Resource(object):
             # return URIRef instead
             return subject
 
-        context = params.get("context", None)
+        # Take context of rdf_type triple as instance's context
+        context = data["direct"][a][rdf_type].keys()[0]
+
         instance = cls._instance(subject,
                                  [rdf_type],
                                  context=context,

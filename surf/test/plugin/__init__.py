@@ -928,3 +928,109 @@ class PluginTestMixin(object):
         self.assertEquals(Person.all().context(context).one().foaf_name.first,
                           'Jacob')
         self.assertEquals(len(Person.all().context(NO_CONTEXT)), 1)
+
+    def test_query_multiple_context(self):
+        """ Test resource.all() and get_by() with multiple contexts. """
+
+        store, session = self._get_store_session(use_default_context=False)
+        Person = session.get_class(surf.ns.FOAF + "Person")
+
+        # Put each person into one context
+        name_and_context = []
+        for name, context in [("John", None),
+                              ("Mary", URIRef("http://my_context_1")),
+                              ("Jane", URIRef("http://other_context_1"))]:
+            person = session.get_resource("http://%s" % name, Person,
+                                          context=context)
+            person.foaf_name = name
+            person.save()
+            name_and_context.append((name, person.context))
+
+        persons = list(Person.all().context(NO_CONTEXT))
+        
+        self.assertEquals(len(persons), 3)
+        get_name_and_context = lambda p: (unicode(p.foaf_name.first), p.context)
+        self.assertEquals(set(map(get_name_and_context, persons)),
+                          set(name_and_context))
+
+    def test_query_foreign_context_attribute(self):
+        store, session = self._get_store_session(use_default_context=False)
+        Person = session.get_class(surf.ns.FOAF + "Person")
+
+        # Put each person into one context
+        persons = {}
+        for name, context in [("John", None),
+                              ("Mary", URIRef("http://my_context_1")),
+                              ("Jane", URIRef("http://other_context_1"))]:
+            person = session.get_resource("http://%s" % name, Person,
+                                          context=context)
+            person.foaf_name = name
+            person.save()
+            persons[name] = person
+
+        persons['Mary'].foaf_knows = [persons['Jane'], persons['John']]
+        persons['Mary'].update()
+
+        mary = Person.get_by(foaf_name='Mary').context(NO_CONTEXT).one()
+
+        knows = list(mary.foaf_knows.order(surf.ns.FOAF.name)\
+                                    .context(NO_CONTEXT))
+        self.assertEquals(knows[0].context, persons['Jane'].context)
+        self.assertEquals(knows[1].context, persons['John'].context)
+
+        # TODO load() only queries context of resource
+        ## Same with load()
+        #mary = Person.get_by(foaf_name='Mary').context(NO_CONTEXT).one()
+        #mary.load()
+
+        #self.assertEquals(mary.foaf_knows[0].context, persons['Jane'].context)
+        #self.assertEquals(mary.foaf_knows[1].context, persons['John'].context)
+
+        # Same with full()
+        mary = Person.get_by(foaf_name='Mary').full().context(NO_CONTEXT).one()
+
+        persons_and_context = [(p, p.context) for p in [persons['Jane'], persons['John']]]
+
+        # TODO fails under Virtuoso as V. doesn't allow ?g to be bound to two
+        # optional matches
+        get_person_and_context = lambda p: (p, p.context)
+        self.assertEquals(set(map(get_person_and_context, mary.foaf_knows)),
+                          set(persons_and_context))
+
+    def test_get_keeps_context(self):
+        store, session = self._get_store_session(use_default_context=False)
+        Person = session.get_class(surf.ns.FOAF + "Person")
+
+        context = URIRef("http://my_context_1")
+        jane = session.get_resource("http://Jane", Person, context=context)
+        jane.foaf_name = "Jane"
+        jane.save()
+
+        person = Person.get_by(foaf_name='Jane').context(context).one()
+        self.assertEquals(person.context, context)
+
+    def test_full_keeps_context(self):
+        store, session = self._get_store_session(use_default_context=False)
+        Person = session.get_class(surf.ns.FOAF + "Person")
+
+        # Put each person into one context
+        person_orig = []
+        for name, context in [("John", None),
+                              ("Mary", URIRef("http://my_context_1")),
+                              ("Jane", URIRef("http://other_context_1"))]:
+            person = session.get_resource("http://%s" % name, Person,
+                                          context=context)
+            person.foaf_name = name
+            person.save()
+            person_orig.append(person)
+
+        persons = Person.all().full().context(NO_CONTEXT)
+
+        get_person_and_context = lambda p: (p, p.context)
+        # TODO this fails on AllegroGraph as an empty ?c will trigger an empty
+        # ?g even if ?g actually should have a bound value. Swapping ?g & ?c
+        # will get this test to succeed but breaks above
+        # test_query_foreign_context_attribute instead
+        self.assertEquals(set(map(get_person_and_context, person_orig)),
+                          set(map(get_person_and_context, persons)))
+
