@@ -43,7 +43,7 @@ from uuid import uuid4
 
 from surf.namespace import get_namespace, get_namespace_url
 from surf.namespace import get_fallback_namespace, SURF
-from surf.rdf import Literal, Namespace, URIRef
+from surf.rdf import BNode, Literal, Namespace, URIRef
 
 pattern_direct = re.compile('^[a-z0-9]{1,}_[a-zA-Z0-9_\-]{1,}$', re.DOTALL)
 pattern_inverse = re.compile('^is_[a-z0-9]{1,}_[a-zA-Z0-9_\-]{1,}_of$', re.DOTALL)
@@ -92,7 +92,7 @@ def uri_to_classname(uri):
     return '%s%s' % (ns_key.title().replace('-', '_'), predicate)
 
 def attr2rdf(attrname):
-    '''converts an `attribute name` in the form:
+    """ Convert an `attribute name` in the form:
 
     .. code-block:: python
 
@@ -103,7 +103,6 @@ def attr2rdf(attrname):
 
     to
 
-
     .. code-block:: xml
 
         <!-- direct predicate -->
@@ -112,9 +111,11 @@ def attr2rdf(attrname):
         <http://xmlns.com/foaf/spec/#term_title>
 
 
-    the function returns two values, the `uri` representation and True if it's a
-    direct predicate or False if its an inverse predicate
-    '''
+    The function returns two values, the `uri` representation and True if it's 
+    a direct predicate or False if its an inverse predicate.
+    
+    """
+    
     def tordf(attrname):
         prefix, predicate = attrname.split('_', 1)
         ns = get_namespace_url(prefix)
@@ -223,7 +224,7 @@ def pretty_rdf(uri):
         uri = uri.subject
     if type(uri) is URIRef:
         NS, symbol = uri_split(uri)
-        if str(NS).startswith('NS'):
+        if unicode(NS).startswith('NS'):
             pretty = symbol
         else:
             pretty = NS.lower() + ':' + symbol
@@ -247,6 +248,27 @@ def value_to_rdf(value):
             return Literal(val, lang=language, datatype=datatype)
         return value
     return value
+
+def json_to_rdflib(obj):
+    """Convert a json result entry to an rdfLib type."""
+    try:
+        type = obj["type"]
+    except KeyError:
+        raise ValueError("No type specified")
+
+    if type == 'uri':
+        return URIRef(obj["value"])
+    elif type == 'literal':
+        if "xml:lang" in obj:
+            return Literal(obj["value"], lang=obj['xml:lang'])
+        else:
+            return Literal(obj["value"])
+    elif type == 'typed-literal':
+        return Literal(obj["value"], datatype=URIRef(obj['datatype']))
+    elif type == 'bnode':
+        return BNode(obj["value"])
+    else:
+        return None
 
 class single(object):
     """ Descriptor for easy access to attributes with single value. """

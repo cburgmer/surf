@@ -96,7 +96,8 @@ class WriterPlugin(RDFWriter):
             self.__remove(s = resource.subject)
             if inverse:
                 self.__remove(o = resource.subject)
-            
+
+        self.__graph.commit()
 
     def _size(self):
         return len(self.__graph)
@@ -112,11 +113,11 @@ class WriterPlugin(RDFWriter):
         self.__remove(s, p, o, context)
 
     def __add(self, s = None, p = None, o = None, context = None):
-        self.log.info('ADD : ' + str(s) + ', ' + str(p) + ', ' + str(o) + ', ' + str(context))
+        self.log.info('ADD: %s, %s, %s, %s' % (s, p, o, context))
         self.__graph.add((s, p, o))
 
     def __remove(self, s = None, p = None, o = None, context = None):
-        self.log.info('REM : ' + str(s) + ', ' + str(p) + ', ' + str(o) + ', ' + str(context))
+        self.log.info('REM: %s, %s, %s, %s' % (s, p, o, context))
         self.__graph.remove((s, p, o))
 
     def index_triples(self, **kwargs):
@@ -130,11 +131,7 @@ class WriterPlugin(RDFWriter):
         return True
 
     def load_triples(self, source = None, publicID = None, format = "xml", **args):
-        """ Load files (or resources on the web) into the triple-store.
-        
-        This method is kept for backward compatibility only.
-        
-        """
+        """ Load files (or resources on the web) into the triple-store. """
         
         if source:
             self.__graph.parse(source, publicID = publicID, format = format, **args)

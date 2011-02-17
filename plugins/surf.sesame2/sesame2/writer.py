@@ -61,14 +61,17 @@ class WriterPlugin(RDFWriter):
             self.__repository = kwargs['repository'] if 'repository' in kwargs else None
             self.__use_allegro_extensions = kwargs['use_allegro_extensions'] if 'use_allegro_extensions' in kwargs else False
 
-            self.log.info('INIT : ' + str(self.server) + ',' + str(self.port) + ',' + str(self.root_path) + ',' + str(self.repository_path))
+            self.log.info('INIT: %s, %s, %s, %s' % (self.server, 
+                                                    self.port, 
+                                                    self.root_path, 
+                                                    self.repository_path)) 
 
             if not self.repository:
-                raise Exception('No <repository> argument supplyed.')
+                raise Exception('No <repository> argument supplied.')
 
             if self.__use_allegro_extensions:
                 opened = self.get_allegro().open_repository(self.repository)
-                self.log.info('ALLEGRO repository opened: ' + str(opened))
+                self.log.info('ALLEGRO repository opened: ' + unicode(opened))
 
     server = property(lambda self: self.__server)
     port = property(lambda self: self.__port)
@@ -85,31 +88,34 @@ class WriterPlugin(RDFWriter):
         for resource in resources:
             allegro = self.get_allegro()
             s = resource.subject
-            allegro.remove_statements(self.__repository, s = s.n3())
+            context = resource.context and resource.context.n3() or None
+            allegro.remove_statements(self.__repository, s = s.n3(), context = context)
             graph = resource.graph()
             allegro.add_statements(self.__repository,
-                                   graph.serialize(format = 'nt'), update = True, content_type = 'nt')
+                                   graph.serialize(format = 'nt'), update = True, content_type = 'nt', context = context)
 
     def _update(self, *resources):
         for resource in resources:
             allegro = self.get_allegro()
             graph = resource.graph()
+            context = resource.context and resource.context.n3() or None
             for s, p, o in graph:
-                allegro.remove_statements(self.__repository, s = s.n3(), p = p.n3())
+                allegro.remove_statements(self.__repository, s = s.n3(), p = p.n3(), context = context)
             allegro.add_statements(self.__repository,
-                                   graph.serialize(format = 'nt'), update = True, content_type = 'nt')
+                                   graph.serialize(format = 'nt'), update = True, content_type = 'nt', context = context)
 
     def _remove(self, *resources, **kwargs):
         inverse = kwargs.get("inverse")
         
         allegro = self.get_allegro()
         for resource in resources:
+            context = resource.context and resource.context.n3() or None
             allegro.remove_statements(self.__repository, 
-                                      s = resource.subject.n3())
+                                      s = resource.subject.n3(), context = context)
             
             if inverse:
                 allegro.remove_statements(self.__repository, 
-                                          o = resource.subject.n3())
+                                          o = resource.subject.n3(), context = context)
 
     def _size(self):
         return self.get_allegro().size(self.__repository)
@@ -141,7 +147,8 @@ class WriterPlugin(RDFWriter):
         return '%s %s %s.' % (s.n3(), p.n3(), o.n3())
 
     def _clear(self, context = None):
-        self.get_allegro().remove_all_statements(self.__repository)
+        context = context and context.n3() or None
+        self.get_allegro().remove_statements(self.__repository, context = context)
 
     def load_triples(self, **kwargs):
         '''

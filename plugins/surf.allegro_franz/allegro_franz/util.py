@@ -39,7 +39,7 @@ from franz.openrdf.model.value import URI as fURIRef
 from franz.openrdf.model.value import BNode as fBNode
 from franz.openrdf.model.literal import Literal as fLiteral
 
-from surf.rdf import BNode, Literal, URIRef
+from surf.rdf import BNode, Literal, URIRef, Namespace
 
 '''
 helper functions that convert between rdflib concepts and sesame2 api concepts
@@ -62,7 +62,7 @@ def toRdfLib(term):
                     dtype = URIRef(dtype)
 
                 return Literal(term.getLabel(), lang=term.getLanguage(),
-                            datatype=dtype)
+                                datatype=dtype)
 
         except Exception, e:
             print e
@@ -73,7 +73,7 @@ def toRdfLib(term):
     return term
 
 def toSesame(term,factory):
-    if type(term) is URIRef:
+    if type(term) in (URIRef, Namespace):
         return factory.createURI(unicode(term))
     elif type(term) is Literal:
         return factory.createLiteral(unicode(term),datatype=term.datatype,language=term.language)

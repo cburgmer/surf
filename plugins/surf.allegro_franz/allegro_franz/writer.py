@@ -124,11 +124,11 @@ class WriterPlugin(RDFWriter):
 
     # used by the sesame api
     def __add(self, s = None, p = None, o = None, context = None):
-        self.log.info('ADD TRIPLE: ' + unicode(s) + ', ' + unicode(p) + ', ' + unicode(o) + ', ' + unicode(context))
+        self.log.info('ADD TRIPLE: %s, %s, %s, %s' % (s, p, o, context))
         self.__con.addTriple(toSesame(s, self.__f), toSesame(p, self.__f), toSesame(o, self.__f), contexts = toSesame(context, self.__f))
 
     def __remove(self, s = None, p = None, o = None, context = None):
-        self.log.info('REM TRIPLE: ' + unicode(s) + ', ' + unicode(p) + ', ' + unicode(o) + ', ' + unicode(context))
+        self.log.info('REM TRIPLE: %s, %s, %s, %s' % (s, p, o, context))
         self.__con.removeTriples(toSesame(s, self.__f), toSesame(p, self.__f), toSesame(o, self.__f), contexts = toSesame(context, self.__f))
 
     def index_triples(self, **kwargs):
@@ -155,7 +155,6 @@ class WriterPlugin(RDFWriter):
         server_side = kwargs['server_side'] if 'server_side' in kwargs else True
         if source:
             self.__con.addFile(source, base = base, format = format, context = toSesame(context, self.__f), serverSide = server_side)
-
             return True
         return False
 

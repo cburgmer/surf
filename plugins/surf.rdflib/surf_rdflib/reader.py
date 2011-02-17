@@ -35,6 +35,11 @@
 # -*- coding: utf-8 -*-
 __author__ = 'Cosmin Basca'
 
+try:
+    from json import loads
+except Exception, e:
+    from simplejson import loads
+
 from surf.plugin.query_reader import RDFQueryReader
 from surf.rdf import ConjunctiveGraph
 
@@ -57,10 +62,13 @@ class ReaderPlugin(RDFQueryReader):
         property(lambda self: self.__commit_pending_transaction_on_close)
 
     def _to_table(self, result):
-        vars = [str(var) for var in result.selectionF]
-        def row_to_dict(row):
-            return dict([ (vars[i], row[i]) for i in range(len(row)) ])
-        return [ row_to_dict(row) for row in result ]
+        # Elements in result.selectionF are instances of rdflib.Variable,
+        # rdflib.Variable is subclass of unicode. We convert them to 
+        # unicode here anyway to hide rdflib internals from clients. 
+        vars = [unicode(var) for var in result.selectionF]
+
+        # Convert each row to dict: { var->value, ... }
+        return [dict(zip(vars, row)) for row in result]
 
     def _ask(self, result):
         # askAnswer is list with boolean values, we want first value. 
@@ -68,11 +76,15 @@ class ReaderPlugin(RDFQueryReader):
 
     # execute
     def _execute(self, query):
-        return self.execute_sparql(unicode(query))
+        q_string = unicode(query)
+        self.log.debug(q_string)
+        return self.__graph.query(q_string)
 
     def execute_sparql(self, q_string, format = None):
         self.log.debug(q_string)
-        return self.__graph.query(q_string)
+
+        result = self.__graph.query(q_string)
+        return loads(result.serialize('json'))
 
     def close(self):
         self.__graph.close(commit_pending_transaction = self.__commit_pending_transaction_on_close)

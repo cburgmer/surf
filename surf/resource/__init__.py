@@ -157,9 +157,9 @@ class Resource(object):
 
     __metaclass__ = ResourceMeta
     _dirty_instances = set()
-
-    def __init__(self, subject=None, block_auto_load=False, context=None,
-                 namespace=None):
+    
+    def __init__(self, subject = None, block_auto_load = False, context = None,
+                 namespace = None):
         """ Initialize a Resource, with the `subject` (a URI - either a string 
         or a URIRef). 
         
@@ -168,7 +168,7 @@ class Resource(object):
         ``namespace`` is specified, generated subject will be in that 
         namespace.
                 
-        ``block_autoload`` will prevent the resource from autoloading all rdf 
+        ``block_auto_load`` will prevent the resource from autoloading all rdf 
         attributes associated with the subject of the resource.
 
         """
@@ -183,7 +183,7 @@ class Resource(object):
         if context == NO_CONTEXT:
             self.__context = None
         elif context:
-            self.__context = URIRef(str(context))
+            self.__context = URIRef(unicode(context))
         elif self.session and self.store_key:
             self.__context = self.session[self.store_key].default_context
 
@@ -562,9 +562,11 @@ class Resource(object):
             attribute_uris[direct].append(attribute_uri)
 
         subjects = {}
-        subjects.update(cls.session[cls.store_key].instances_by_attribute(cls, direct_attributes, True, context))
-        subjects.update(cls.session[cls.store_key].instances_by_attribute(cls, inverse_attributes, False, context))
-
+        if direct_attributes:
+            subjects.update(cls.session[cls.store_key].instances_by_attribute(cls, direct_attributes, True, context))
+        if inverse_attributes:
+            subjects.update(cls.session[cls.store_key].instances_by_attribute(cls, inverse_attributes, False, context))
+        
         instances = []
         for s, types in subjects.items():
             if not isinstance(s, URIRef):
@@ -609,7 +611,8 @@ class Resource(object):
                     break
 
         # In results?
-        if not rdf_type and "direct" in data and a in data["direct"]:
+        if (not rdf_type and "direct" in data and a in data["direct"]
+            and data["direct"][a]):
             rdf_type = data["direct"][a].keys()[0]
 
         if rdf_type is None:
@@ -679,6 +682,10 @@ class Resource(object):
         # query like friends = get_by(is_foaf_knows_of = john), thus the
         # attribute name inversion
         uri, direct = attr2rdf(attribute_name)
+        
+        # We'll be using inverse_attribute_name as keyword argument.
+        # Python 2.6.2 and older doesn't allow unicode keyword arguments, 
+        # so we do str().
         inverse_attribute_name = str(rdf2attr(uri, not direct))
 
         store = self.session[self.store_key]
@@ -800,11 +807,11 @@ class Resource(object):
         for s, p, o in graph:
             attr_name = None
             value = None
-            if str(s) == str(self.subject):
+            if unicode(s) == unicode(self.subject):
                 attr_name = rdf2attr(p, True)
                 #value = self.__lazy([o])
                 value = o
-            elif str(o) == str(self.subject):
+            elif unicode(o) == unicode(self.subject):
                 attr_name = rdf2attr(p, False)
                 #value = self.__lazy([s])
                 value = s
@@ -879,3 +886,6 @@ class Resource(object):
             return self.subject == other.subject
 
         return False
+
+    def __hash__(self):
+        return hash(self.subject)

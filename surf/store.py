@@ -40,6 +40,7 @@ from plugin import manager
 from plugin.manager import load_plugins, PluginNotFoundException, add_plugin_path, registered_readers, registered_writers
 from plugin.reader import RDFReader
 from plugin.writer import RDFWriter
+from surf.query import Query
 from surf.rdf import URIRef
 from surf.query import Query
 
@@ -78,6 +79,9 @@ class Store(object):
         if reader:
             if reader in __readers__:
                 self.reader = __readers__[reader](*args, **kwargs)
+            elif isinstance(reader, RDFReader):
+                # We've received already configured reader, use it.
+                self.reader = reader
             else:
                 raise PluginNotFoundException('The <%s> READER plugin was not found' % (reader))
         else:
@@ -86,6 +90,9 @@ class Store(object):
         if writer:
             if writer in __writers__:
                 self.writer = __writers__[writer](self.reader, *args, **kwargs)
+            elif isinstance(writer, RDFWriter):
+                # We've received already configured writer, use it.
+                self.writer = writer
             else:
                 raise PluginNotFoundException('The <%s> WRITER plugin was not found' % (reader))
         else:
@@ -130,14 +137,14 @@ class Store(object):
 
         try:
             self.reader.close()
-            self.log('reader closed successfully')
+            self.log.debug('reader closed successfully')
         except Exception, e:
-            self.log('error on closing the reader ' + str(e))
+            self.log.exception("Error on closing the reader")
         try:
             self.writer.close()
-            self.log('writer closed successfully')
+            self.log.debug('writer closed successfully')
         except Exception, e:
-            self.log('error on closing the writer ' + str(e))
+            self.log.exception("Error on closing the writer")
 
     #---------------------------------------------------------------------------
     # the reader interface
@@ -202,7 +209,7 @@ class Store(object):
         """ See :func:`surf.plugin.writer.RDFWriter.clear` method. """
 
         context = self.__add_default_context(context)
-        self.writer.clear(context=context)
+        self.writer.clear(context = context)
 
     # Crud
     def save(self, *resources):
@@ -261,7 +268,8 @@ class Store(object):
 
         return self.writer.index_triples(**kwargs)
 
-    def load_triples(self, **kwargs):
+    def load_triples(self, context=None, **kwargs):
         """ See :func:`surf.plugin.writer.RDFWriter.load_triples` method. """
 
-        return self.writer.load_triples(**kwargs)
+        context = self.__add_default_context(context)
+        return self.writer.load_triples(context=context, **kwargs)

@@ -39,6 +39,10 @@ import httplib
 import logging
 from urllib import urlencode
 from xml.dom.minidom import parseString, getDOMImplementation
+try:
+    from json import loads
+except Exception, e:
+    from simplejson import loads
 
 from surf.rdf import BNode, ConjunctiveGraph, Graph, Literal, Namespace, URIRef
 
@@ -71,21 +75,27 @@ def parse_sparql_xml(response):
 
         try:
             doc = parseString(response)
-            head = doc.getElementsByTagName('head')[0]
-            headers = []
-            for h in head.childNodes:
-                if h.nodeType == h.ELEMENT_NODE:
-                    headers.append(h.getAttribute('name'))
-            results = doc.getElementsByTagName('results')[0]
-            res_list = []
-            for result in results.childNodes:
-                if result.nodeType == result.ELEMENT_NODE:
-                    res = {}
-                    for binding in result.childNodes:
-                        if binding.nodeType == binding.ELEMENT_NODE:
-                            res[binding.getAttribute('name')] = get_binding(binding)
-                    res_list.append(res)
-            return res_list
+            #head = doc.getElementsByTagName('head')[0]
+            #headers = []
+            #for h in head.childNodes:
+            #    if h.nodeType == h.ELEMENT_NODE:
+            #        headers.append(h.getAttribute('name'))
+            results_nodes = doc.getElementsByTagName('results')
+            if results_nodes:
+                results = results_nodes[0]
+                res_list = []
+                for result in results.childNodes:
+                    if result.nodeType == result.ELEMENT_NODE:
+                        res = {}
+                        for binding in result.childNodes:
+                            if binding.nodeType == binding.ELEMENT_NODE:
+                                res[binding.getAttribute('name')] = get_binding(binding)
+                        res_list.append(res)
+                return res_list
+            else:
+                boolean = doc.getElementsByTagName('boolean')[0]
+                value = boolean.childNodes[0].nodeValue
+                return {'false': False, 'true': True}[value]
         except:
             print 'NOT XML Response: %s' % response
             return []
@@ -105,13 +115,13 @@ class RDFTransaction(object):
         node = None
         if type(entity) is URIRef:
             node = self.transaction.createElement('uri')
-            node.appendChild(self.transaction.createTextNode(str(entity)))
+            node.appendChild(self.transaction.createTextNode(unicode(entity)))
         elif type(entity) is BNode:
             node = self.transaction.createElement('bnode')
-            node.appendChild(self.transaction.createTextNode(str(entity)))
+            node.appendChild(self.transaction.createTextNode(unicode(entity)))
         elif type(entity) is Literal:
             node = self.transaction.createElement('literal')
-            node.appendChild(self.transaction.createTextNode(str(entity)))
+            node.appendChild(self.transaction.createTextNode(unicode(entity)))
             if entity.lang:
                 node.setAttribute('xml:lang', entity.lang)
             if entity.datatype:
@@ -125,7 +135,7 @@ class RDFTransaction(object):
             node.appendChild(self._rdf_node(p))
             node.appendChild(self._rdf_node(o))
             if context:
-                node.appendChild(self.transaction.createTextNode(str(context)))
+                node.appendChild(self.transaction.createTextNode(unicode(context)))
             self.root.appendChild(node)
         except:
             pass
@@ -138,7 +148,7 @@ class RDFTransaction(object):
                 node.appendChild(self._rdf_node(p))
                 node.appendChild(self._rdf_node(o))
                 if context:
-                    node.appendChild(self.transaction.createTextNode(str(context)))
+                    node.appendChild(self.transaction.createTextNode(unicode(context)))
             self.root.appendChild(node)
         except:
             pass
@@ -152,7 +162,7 @@ class RDFTransaction(object):
                 node.appendChild(self._rdf_node(p))
                 node.appendChild(self._rdf_node(o))
                 if context:
-                    node.appendChild(self.transaction.createTextNode(str(context)))
+                    node.appendChild(self.transaction.createTextNode(unicode(context)))
             self.root.appendChild(node)
         except:
             pass
@@ -160,7 +170,7 @@ class RDFTransaction(object):
     def clear(self, context = None):
         node = self.transaction.createElement('clear')
         if context:
-            node.appendChild(self.transaction.createTextNode(str(context)))
+            node.appendChild(self.transaction.createTextNode(unicode(context)))
         self.root.appendChild(node)
 
 
@@ -168,7 +178,7 @@ class RDFTransaction(object):
         for prefix in namespaces:
             node = self.transaction.createElement('setNamespace')
             node.setAttribute('prefix', prefix)
-            node.setAttribute('name', str(namespaces[prefix]))
+            node.setAttribute('name', unicode(namespaces[prefix]))
             self.root.appendChild(node)
 
     def remove_namespace(self, *namespaces):
@@ -209,6 +219,7 @@ class Sesame2(httplib.HTTPConnection):
         'n3'        : 'text/rdf+n3',
         'turtle'    : 'application/x-turtle',
         'sparql'    : 'application/sparql-results+xml',
+        'sparql+json'    : 'application/sparql-results+json',
         'html'      : 'text/html',
         'text'      : 'text/plain'
     }
@@ -219,12 +230,13 @@ class Sesame2(httplib.HTTPConnection):
         'n3'        : 'text/rdf+n3',
         'turtle'    : 'application/x-turtle',
         'sparql'    : 'application/sparql-results+xml',
+        'sparql+json'    : 'application/sparql-results+json',
         'html'      : 'text/html',
         'text'      : 'text/plain'
     }
 
     __sparql__ = {
-        'SELECT'    : ['sparql', 'html'],
+        'SELECT'    : ['sparql+json', 'sparql', 'html'],
         'ASK'       : ['sparql', 'html'],
         'CONSTRUCT' : ['xml', 'n3'],
         'DESCRIBE'  : ['xml', 'n3']
@@ -256,6 +268,8 @@ class Sesame2(httplib.HTTPConnection):
             ser_content = graph.parse(data = content, format = format)
         elif format in ['sparql']:
             ser_content = parse_sparql_xml(content)
+        elif format in ['sparql+json']:
+            ser_content = loads(content)
         return ser_content
 
     def sesame2_request(self, method, sesame2_method, sesame2_params = {}, body = '', params = {}, headers = {}):
@@ -293,7 +307,7 @@ class Sesame2(httplib.HTTPConnection):
     def prolog_query(self, id, query, infer = False, limit = None):
         return self.__query(id, query, infer = infer, queryLn = 'Prolog', limit = limit)
 
-    def sparql_query(self, id, query, infer = False, format = 'sparql'):
+    def sparql_query(self, id, query, infer = False, format = 'sparql+json'):
         type = None
         if query.upper().find('SELECT ') != -1:
             type = 'SELECT'
@@ -357,6 +371,9 @@ class Sesame2(httplib.HTTPConnection):
         params = {}
         if context:
             params['context'] = context
+        else:
+            # We don't want to delete all triples, only context-less ones
+            params['context'] = 'null'
         self._param_stmt(params, s, p, o)
         try:
             self.sesame2_request('DELETE', 'statements', {'id':id}, params = params)
