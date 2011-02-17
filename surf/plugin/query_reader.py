@@ -55,9 +55,12 @@ def query_SP(s, p, direct, context):
 
     return query
 
-def query_S(s, direct, context):
+def query_S(s, direct, contexts):
     """ Construct :class:`surf.query.Query` with `?p`, `?v` and `?g`, `?c` as
     unknowns. """
+    if contexts and not hasattr(contexts, '__iter__'):
+        contexts = [contexts]
+
 
     s, v = direct and (s, '?v') or ('?v', s)
     query = select('?p', '?v', '?c', '?g').distinct()
@@ -68,9 +71,9 @@ def query_S(s, direct, context):
     query.where((s, '?p', v)).optional_group(('?v', a, '?c'))\
                              .optional_group(named_group('?g', (s, a, v)))\
                              .optional_group(named_group('?g', ('?v', a, '?c')))
-    if context:
-        query.from_(context)
-        query.from_named(context)
+    if contexts:
+        query.from_(*contexts)
+        query.from_named(*contexts)
 
     return query
 
@@ -296,10 +299,10 @@ class RDFQueryReader(RDFReader):
         # Query for the same tuple to get the named graph if obtainable
         query.optional_group(named_group("?g", ("?s", a, "?c")))
 
-        context = params.get("context", None)
-        if context is not None:
-            query.from_(context)
-            query.from_named(context)
+        contexts = params.get("contexts", None)
+        if contexts:
+            query.from_(*contexts)
+            query.from_named(*contexts)
 
         # Load just subjects and their types
         table = self._to_table(self._execute(query))
@@ -326,12 +329,12 @@ class RDFQueryReader(RDFReader):
         return results
 
     def __get_by_n_queries(self, params):
-        context = params.get("context", None)
+        contexts = params.get("contexts", None)
 
         query = select("?s")
-        if context is not None:
-            query.from_(context)
-            query.from_named(context)
+        if contexts:
+            query.from_(*contexts)
+            query.from_named(*contexts)
 
         self.__apply_limit_offset_order_get_by_filter(params, query)
 
@@ -342,12 +345,12 @@ class RDFQueryReader(RDFReader):
             subject = match["s"]
             instance_data = {}
 
-            result = self._execute(query_S(subject, True, context))
+            result = self._execute(query_S(subject, True, contexts))
             result = self.convert(result, 'p', 'v', 'g', 'c')
             instance_data["direct"] = result
 
             if not params.get("only_direct"):
-                result = self._execute(query_S(subject, False, context))
+                result = self._execute(query_S(subject, False, contexts))
                 result = self.convert(result, 'p', 'v', 'g', 'c')
                 instance_data["inverse"] = result
 
@@ -356,7 +359,7 @@ class RDFQueryReader(RDFReader):
         return results
 
     def __get_by_subquery(self, params):
-        context = params.get("context", None)
+        contexts = params.get("contexts", None)
 
         inner_query = select("?s")
         inner_params = params.copy()
@@ -375,9 +378,9 @@ class RDFQueryReader(RDFReader):
                     optional_group(named_group("?g", ("?s", a, "?v"))))
                     #optional_group(named_group("?g", ("?v", a, "?c"))))
         query.where(inner_query)
-        if context is not None:
-            query.from_(context)
-            query.from_named(context)
+        if contexts:
+            query.from_(*contexts)
+            query.from_named(*contexts)
 
         # Need ordering in outer query
         if "order" in params:

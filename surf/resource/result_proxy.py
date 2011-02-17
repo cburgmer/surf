@@ -223,11 +223,11 @@ class ResultProxy(object):
             params["filter"].append((attr, value, direct))
         return ResultProxy(params)
 
-    def context(self, context):
-        """ Specify context/graph that resources should be loaded from. """
+    def context(self, *contexts):
+        """ Specify contexts/graphs that resources should be loaded from. """
 
         params = self.__params.copy()
-        params["context"] = context
+        params["contexts"] = contexts
         return ResultProxy(params)
 
     def __execute_get_by(self):
@@ -241,7 +241,7 @@ class ResultProxy(object):
                 self.__get_by_args["offset"] = self.__params["low"]
 
             for key in ["limit", "offset", "full", "order", "desc", "get_by",
-                        "only_direct", "context", "filter"]:
+                        "only_direct", "contexts", "filter"]:
                 if key in self.__params:
                     self.__get_by_args[key] = self.__params[key]
 

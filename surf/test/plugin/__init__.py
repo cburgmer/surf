@@ -1034,3 +1034,24 @@ class PluginTestMixin(object):
         self.assertEquals(set(map(get_person_and_context, person_orig)),
                           set(map(get_person_and_context, persons)))
 
+    def test_query_multiple_context(self):
+        """ Test resource.all() and get_by() with multiple contexts. """
+
+        store, session = self._get_store_session()
+        Person = session.get_class(surf.ns.FOAF + "Person")
+
+        for idx, name in enumerate(["John", "Mary", "Jane"]):
+            # Put each person into one context
+            context = URIRef("http://my_context_%d" % idx)
+            store.clear(context)
+
+            person = session.get_resource("http://%s" % name, Person,
+                                          context=context)
+            person.foaf_name = name
+            person.save()
+
+        persons = list(Person.all().context("http://my_context_1",
+                                            "http://my_context_2"))
+        self.assertEquals(len(persons), 2)
+        self.assertEquals(sorted([unicode(p.subject) for p in persons]),
+                          ['http://Jane', 'http://Mary'])
