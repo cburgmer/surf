@@ -1040,9 +1040,10 @@ class PluginTestMixin(object):
         store, session = self._get_store_session()
         Person = session.get_class(surf.ns.FOAF + "Person")
 
-        for idx, name in enumerate(["John", "Mary", "Jane"]):
+        for name, context in [("John", None),
+                              ("Mary", URIRef("http://my_context_1")),
+                              ("Jane", URIRef("http://other_context_1"))]:
             # Put each person into one context
-            context = URIRef("http://my_context_%d" % idx)
             store.clear(context)
 
             person = session.get_resource("http://%s" % name, Person,
@@ -1051,7 +1052,46 @@ class PluginTestMixin(object):
             person.save()
 
         persons = list(Person.all().context("http://my_context_1",
-                                            "http://my_context_2"))
+                                            "http://other_context_1"))
         self.assertEquals(len(persons), 2)
         self.assertEquals(sorted([unicode(p.subject) for p in persons]),
                           ['http://Jane', 'http://Mary'])
+
+    def test_multiple_context_attribute_access(self):
+        """ Test attribute access with multiple contexts. """
+
+        store, session = self._get_store_session()
+        Person = session.get_class(surf.ns.FOAF + "Person")
+
+        # Put each person into one context
+        persons = {}
+        for name, context in [("John", None),
+                              ("Mary", URIRef("http://my_context_1")),
+                              ("Jane", URIRef("http://other_context_1"))]:
+            person = session.get_resource("http://%s" % name, Person,
+                                          context=context)
+            person.foaf_name = name
+            person.save()
+            persons[name] = person
+
+        persons['Jane'].foaf_knows = persons['John']
+        persons['Jane'].update()
+        persons['Mary'].foaf_knows = persons['Jane']
+        persons['Mary'].update()
+
+        jane = Person.get_by(foaf_name='Jane')\
+                     .context("http://my_context_1", "http://other_context_1")\
+                     .one()
+        # Make sure that John's type info is not accessed
+        self.assert_(type(jane.foaf_knows.first) is URIRef)
+        self.assertEquals(jane.foaf_knows.first, URIRef('http://John'))
+
+        mary = Person.get_by(foaf_name='Mary')\
+                     .context("http://my_context_1", "http://other_context_1")\
+                     .one()
+
+        # Access with query
+        self.assertEquals(mary.foaf_knows.limit(1).first().foaf_name.first,
+                          'Jane')
+        # Access as attribute
+        self.assertEquals(mary.foaf_knows.first.foaf_name.first, 'Jane')

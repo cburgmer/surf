@@ -159,7 +159,7 @@ class Resource(object):
     _dirty_instances = set()
     
     def __init__(self, subject = None, block_auto_load = False, context = None,
-                 namespace = None):
+                 query_contexts = None, namespace = None):
         """ Initialize a Resource, with the `subject` (a URI - either a string 
         or a URIRef). 
         
@@ -186,6 +186,13 @@ class Resource(object):
             self.__context = URIRef(unicode(context))
         elif self.session and self.store_key:
             self.__context = self.session[self.store_key].default_context
+
+        if query_contexts:
+            self.__query_contexts = query_contexts
+        elif self.__context:
+            self.__query_contexts = [self.__context]
+        else:
+            self.__query_contexts = []
 
         self.__expired = False
         self.__rdf_direct = {}
@@ -243,16 +250,9 @@ class Resource(object):
 
     context = property(fget=lambda self: self.__context,
                        fset=__set_context)
-    """ Context (graph) where triples constituting this resource reside in.
+    """ Context (graph) where triples constituting this resource are stored in.
 
     In case of SPARQL and SPARUL, "context" is the same thing as "graph".
-
-    Effects of having context set:
-     - When resource as whole or its individual attributes are loaded,
-       triples will be only loaded from this context.
-     - When resource is saved, triples will be saved to this context.
-     - When existence of resource is checked (:meth:`is_present`), only
-       triples in this context will be considered.
 
     `context` attribute would be usually set by `store` or `session` when
     instantiating resource, but it can also be set or changed on
@@ -277,8 +277,31 @@ class Resource(object):
 
     """
 
+    def __set_query_contexts(self, value):
+        if not isinstance(value, URIRef):
+            value = URIRef(value)
+
+        self.__query_contexts = value
+
+    query_contexts = property(fget=lambda self: self.__query_contexts,
+                       fset=__set_query_contexts)
+    query_contexts = property(fget=lambda self: self.__query_contexts)
+    """ Contexts (graphs) where triples constituting this resource can originate
+    from.
+
+    Effects of having query contexts set:
+     - When resource as whole or its individual attributes are loaded,
+       triples will be only loaded from these contexts.
+     - When existence of resource is checked (:meth:`is_present`), only
+       triples in these contexts will be considered.
+
+    The query context defaults to the resource's (stored) context but can be
+    changed to allow values from other contexts to be accessed.
+    """
+
     @classmethod
-    def _instance(cls, subject, vals, context=None, store=None, block_auto_load=True):
+    def _instance(cls, subject, vals, context=None, query_contexts=None,
+                  store=None, block_auto_load=True):
         """
         Create an instance from the `subject` and it's associated
         `concept` (`vals`) URIs.
@@ -305,6 +328,7 @@ class Resource(object):
         return cls.session.map_instance(uri, subject, classes=classes,
                                         block_auto_load=block_auto_load,
                                         context=context,
+                                        query_contexts=query_contexts,
                                         store=store)
 
     @classmethod
@@ -634,6 +658,7 @@ class Resource(object):
         instance = cls._instance(subject,
                                  [rdf_type],
                                  context=context,
+                                 query_contexts=params.get("contexts"),
                                  store=cls.store_key,
                                  block_auto_load=False)
 
@@ -703,7 +728,10 @@ class Resource(object):
                             instancemaker=self.__instancemaker)
 
         kwargs = {inverse_attribute_name : self.subject}
-        return proxy.get_by(**kwargs)
+        query = proxy.get_by(**kwargs)
+        if self.query_contexts:
+            query = query.context(*self.query_contexts)
+        return query
 
     def serialize(self, format='xml', direct=False):
         """

@@ -41,7 +41,7 @@ from surf.query import a, ask, select, optional_group, named_group
 from surf.resource.util import Q
 from surf.rdf import URIRef
 
-def query_SP(s, p, direct, context):
+def query_SP(s, p, direct, contexts):
     """ Construct :class:`surf.query.Query` with `?v` and `?g`, `?c` as
     unknowns. """
 
@@ -49,19 +49,15 @@ def query_SP(s, p, direct, context):
     query = select('?v', '?c', '?g').distinct()
     query.where((s, p, v)).optional_group(('?v', a, '?c'))\
                           .optional_group(named_group('?g', ('?v', a, '?c')))
-    if context:
-        query.from_(context)
-        query.from_named(context)
+    if contexts:
+        query.from_(*contexts)
+        query.from_named(*contexts)
 
     return query
 
 def query_S(s, direct, contexts):
     """ Construct :class:`surf.query.Query` with `?p`, `?v` and `?g`, `?c` as
     unknowns. """
-    if contexts and not hasattr(contexts, '__iter__'):
-        contexts = [contexts]
-
-
     s, v = direct and (s, '?v') or ('?v', s)
     query = select('?p', '?v', '?c', '?g').distinct()
     # Get predicate, objects and optionally rdf:type & named graph of
@@ -77,15 +73,14 @@ def query_S(s, direct, contexts):
 
     return query
 
-def query_Ask(subject, context):
+def query_Ask(subject, contexts):
     """ Construct :class:`surf.query.Query` of type **ASK**. """
 
-    query = ask()
-    if context:
-        pattern = named_group(context, (subject, '?p', '?o'))
-        query.where(pattern)
-    else:
-        query.where((subject, '?p', '?o'))
+    query = ask().where((subject, '?p', '?o'))
+
+    if contexts:
+        query.from_(*contexts)
+        query.from_named(*contexts)
 
     return query
 
@@ -126,18 +121,18 @@ class RDFQueryReader(RDFReader):
             raise ValueError('The use_subqueries parameter must be a bool or a string set to "true" or "false"')
 
     #protected interface
-    def _get(self, subject, attribute, direct, context):
-        query = query_SP(subject, attribute, direct, context)
+    def _get(self, subject, attribute, direct, query_contexts):
+        query = query_SP(subject, attribute, direct, query_contexts)
         result = self._execute(query)
         return self.convert(result, 'v', 'g', 'c')
 
-    def _load(self, subject, direct, context):
-        query = query_S(subject, direct, context)
+    def _load(self, subject, direct, query_contexts):
+        query = query_S(subject, direct, query_contexts)
         result = self._execute(query)
         return self.convert(result, 'p', 'v', 'g', 'c')
 
-    def _is_present(self, subject, context):
-        query = query_Ask(subject, context)
+    def _is_present(self, subject, query_contexts):
+        query = query_Ask(subject, query_contexts)
         result = self._execute(query)
         return self._ask(result)
 

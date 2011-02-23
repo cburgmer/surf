@@ -35,6 +35,7 @@ from surf.exc import NoResultFound, MultipleResultsFound
 from surf.rdf import Literal, URIRef
 from surf.util import attr2rdf, value_to_rdf
 from surf.resource.util import Q, split_attribute_edges
+from surf.store import NO_CONTEXT
 
 class ResultProxy(object):
     """ Interface to :meth:`surf.store.Store.get_by`.
@@ -226,8 +227,12 @@ class ResultProxy(object):
     def context(self, *contexts):
         """ Specify contexts/graphs that resources should be loaded from. """
 
+        if NO_CONTEXT in contexts and len(contexts) > 1:
+            raise ValueError("Cannot use NO_CONTEXT with other contexts")
+
         params = self.__params.copy()
         params["contexts"] = contexts
+
         return ResultProxy(params)
 
     def __execute_get_by(self):

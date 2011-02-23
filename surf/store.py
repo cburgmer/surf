@@ -180,14 +180,11 @@ class Store(object):
 
     def get_by(self, params):
         # Set default context
-        contexts = params.get("contexts", ())
+        contexts = params.get("contexts")
         if not contexts and self.__default_context:
             params["contexts"] = [self.__default_context]
         elif not contexts or contexts == (NO_CONTEXT,):
             params["contexts"] = []
-
-        if NO_CONTEXT in params["contexts"]:
-            raise ValueError("Cannot use NO_CONTEXT with other contexts")
 
         return self.reader.get_by(params)
 

@@ -72,7 +72,7 @@ class TestResultProxy(unittest.TestCase):
     def test_context(self):
         """ Test context. """
 
-        self.store.expect_args({"context" : "my_context"})
+        self.store.expect_args({"contexts" : ("my_context",)})
         list(self.proxy.context("my_context"))
 
     def test_filter(self):
