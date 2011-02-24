@@ -1095,3 +1095,31 @@ class PluginTestMixin(object):
                           'Jane')
         # Access as attribute
         self.assertEquals(mary.foaf_knows.first.foaf_name.first, 'Jane')
+
+    def test_multiple_request_context(self):
+        """ Test multiple query contexts. """
+
+        store, session = self._get_store_session()
+        Person = session.get_class(surf.ns.FOAF + "Person")
+
+        # Put each person into one context
+        persons = {}
+        for name, context in [("John", None),
+                              ("Mary", URIRef("http://my_context_1")),
+                              ("Jane", URIRef("http://other_context_1"))]:
+            person = session.get_resource("http://%s" % name, Person,
+                                          context=context)
+            person.foaf_name = name
+            person.save()
+            persons[name] = person
+
+        persons['Jane'].foaf_knows = persons['Mary']
+        persons['Jane'].update()
+
+        query_contexts = (URIRef("http://my_context_1"),
+                          URIRef("http://other_context_1"))
+        jane = Person.get_by(foaf_name='Jane').context(*query_contexts).one()
+        # Make sure that query context is handed down
+        self.assertEquals(jane.query_contexts, query_contexts)
+        print jane.foaf_knows.limit(1)._ResultProxy__params
+        self.assertEquals(jane.foaf_knows.first.query_contexts, query_contexts)

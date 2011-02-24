@@ -277,15 +277,17 @@ class Resource(object):
 
     """
 
-    def __set_query_contexts(self, value):
-        if not isinstance(value, URIRef):
-            value = URIRef(value)
+    def __set_query_contexts(self, values):
+        uri_refs = []
+        for value in values:
+            if not isinstance(value, URIRef):
+                value = URIRef(value)
+            uri_refs.append(value)
 
-        self.__query_contexts = value
+        self.__query_contexts = tuple(uri_refs)
 
     query_contexts = property(fget=lambda self: self.__query_contexts,
                        fset=__set_query_contexts)
-    query_contexts = property(fget=lambda self: self.__query_contexts)
     """ Contexts (graphs) where triples constituting this resource can originate
     from.
 
@@ -516,6 +518,11 @@ class Resource(object):
                     rdf_dict = resource.__rdf_direct
                 else:
                     rdf_dict = resource.__rdf_inverse
+
+                # Save query_contexts
+                for i in range(len(surf_values)):
+                    if isinstance(surf_values[i], Resource):
+                        surf_values[i].query_contexts = self.query_contexts
 
                 # Initial synchronization
                 rdf_dict[predicate] = [resource.to_rdf(value) for value in surf_values]
