@@ -46,7 +46,7 @@ class WriterPlugin(RDFWriter):
                 self.__remove(o=resource.subject, context=resource.context)
 
     def _size(self):
-        return self.__librdf_model.site()
+        return self.__librdf_model.size()
 
     def _add_triple(self, s = None, p = None, o = None, context = None):
         self.__add(s, p, o, context)
@@ -99,6 +99,7 @@ class WriterPlugin(RDFWriter):
     def _clear(self, context=None):
         """ Clear the triple-store. """
 
+        # TODO Does this only remove context less triples?
         self.__remove((None, None, None), context)
 
     def close(self):
